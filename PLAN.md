@@ -1,8 +1,8 @@
 # Personal ebook reader: implementation plan
 
-Updated 2026-10-30 after reviewing the original handoff with the owner. A local MVP is now implemented; deployment is deferred.
+Updated 2026-10-30. The reader MVP and private Supabase library are implemented.
 
-The local MVP uses browser storage for files and reading positions and opens directly into the library. Shared-code access, Supabase storage, and cross-device sync below remain the target hosted design. See [README.md](README.md) for local run instructions and current limitations.
+The default app uses a code-only Supabase owner session, private Storage, and shared reading positions. The schema and access policies are applied to the existing project; its plan and billing settings are unchanged. An explicit development-only local preview retains browser storage. See [README.md](README.md) for setup, tests, and run instructions. Browser tests cover cloud resume and access isolation; native PWA installation on the target devices still needs manual verification.
 
 ## Product intent
 

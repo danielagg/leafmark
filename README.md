@@ -1,59 +1,87 @@
 # Leafmark
 
-A small, quiet PDF and EPUB reader. Add your files, open a book, and pick up where you left off.
+A small, private PDF and EPUB reader. Add your files, open a book, and pick up where you left off on another device.
 
 ## Run locally
 
-Requires a current Node.js release supported by Vite, such as Node 22.12+ or Node 24.
+Requires Node 22.12+ or Node 24.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Open [http://127.0.0.1:5173](http://127.0.0.1:5173). Choose **Try sample books** to explore a PDF and an EPUB, or use **Add books** to select your own files. You can also drop files onto the library.
+Open [http://127.0.0.1:5173](http://127.0.0.1:5173). The configured app uses Supabase and asks for your library code. This machine's ignored `.env.local` contains the connection settings and `LEAFMARK_ACCESS_CODE`. The code is a Supabase password, never a frontend environment variable.
 
-The development server binds to this computer's loopback address by default.
+For a preview without a cloud account, run `npm run dev:local`. This development-only mode stores files and positions in this browser's IndexedDB. Existing local books remain there; upload their original files into the cloud library to use them across devices. Clearing site data removes local books. Each hostname and port has its own local library.
 
-## This MVP
+Both modes include **Try sample books**, a PDF and an EPUB you can remove afterward. Use **Add books** or drop files into the library for your own files. The development server binds to this computer's loopback address.
 
-- A responsive filename library with upload and deletion.
-- Continuous PDF scrolling with page jumps and zoom. Only nearby pages render to keep long documents light on memory.
-- Reflowable EPUB reading with a vertical/horizontal switch. Vertical scrolls continuously; horizontal shows bordered pages, two side by side on wide screens and one on narrow screens. Mouse wheel, trackpad, touch, and keyboard support reading navigation.
-- Automatic reading positions that survive closing and reopening a book or refreshing the app. EPUB positions retain the visible text anchor and its vertical offset, and flush before returning to the library.
-- A continue-reading shortcut and progress indicators.
-- One shared toolbar for PDF and EPUB: previous/next page, page input and total, and zoom out/in. The percentage appears only away from 100%. EPUB page numbers use stable text locations across the whole book; saved positions still use the exact content anchor.
-- Light styling, locally bundled fonts, and PWA manifest and icons.
-- Two original sample books included in the repository.
+## Cloud setup
 
-Files and positions are stored in this browser's IndexedDB. They stay on this device and browser profile. Clearing site data removes the library; original files on your computer are unaffected. Each hostname and port has its own library, so keep using the same URL.
+The existing Supabase project is `wvcwmujpnhrpzjkmuhsw`. Setup uses its existing Free plan. No subscription, compute, or paid add-on settings are configured by this repo.
 
-This local preview opens directly into the library. Shared-code access, Supabase storage, and cross-device synchronization are planned in [PLAN.md](PLAN.md) and are not connected in this version. There is no cloud account or deployment setup required to try it. Do not publish this preview as a private hosted library without adding those access controls.
+The migration creates `public.books`, a private `books` storage bucket, and a private singleton owner allowlist. Database and Storage policies independently require that owner. An arbitrary signed-in user has no library access. Global public signup and anonymous sign-in are disabled; the email/password provider remains enabled for the provisioned owner.
 
-Accepts ordinary `.pdf` and `.epub` files up to 50 MB. Password-protected PDFs, restricted Kindle downloads, and unusual fixed-layout EPUBs may be unsupported. The EPUB reader disables book scripts. Offline startup is not implemented.
+On a trusted computer with the Supabase CLI installed and logged in:
 
-PWA installation depends on the browser. On a supported browser, use its install-app action to open Leafmark from its own icon. This version has no service worker and does not promise offline startup.
+```sh
+supabase link --project-ref wvcwmujpnhrpzjkmuhsw
+supabase config diff --project-ref wvcwmujpnhrpzjkmuhsw
+supabase config push --project-ref wvcwmujpnhrpzjkmuhsw
+supabase db push --linked --skip-vault
+npm run setup:owner
+```
+
+The migration has already been applied to this project. `setup:owner` creates one confirmed internal identity and a strong random code, records its ID in the trusted allowlist, and writes `.env.local` with owner-only file permissions. It obtains a privileged API key in memory through the logged-in CLI and never writes that key. Rerunning it verifies the existing code and owner; it does not reset credentials or replace an existing owner. The app has no signup or account-management screens.
+
+Use `.env.example` as the public configuration template. These four values may be included in a frontend build:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_OWNER_EMAIL`, an internal non-secret identifier
+- `VITE_OWNER_ID`
+
+Keep the access code, database password, and privileged keys out of `VITE_*` variables, source control, and hosting configuration. Production builds require the public configuration and always use the unlock screen, even if `VITE_STORAGE_MODE=local` is set.
+
+Sessions are remembered on each device. **Lock library** signs out only that device. Internet is required to open files and save progress. Failed saves show an error and retry while the reader is open, visible, and connected. Reopening a book fetches its latest position; the last successful save wins if two devices are actively reading.
+
+Uploads go directly to private Supabase Storage, using TUS above 6 MiB. The per-file limit is 50 MiB. File records are created only after upload; failed record creation attempts file cleanup. Deletion removes bytes first and then the record so partial failures can be retried. Cloud files are downloaded into memory when opened, not copied into IndexedDB.
+
+Supabase Free has limited storage and transfer allowances and may pause inactive projects. Keep original copies of your books. See [Supabase pricing](https://supabase.com/pricing) for current limits.
+
+## Host on Vercel
+
+Import this repository as a Vite project. `vercel.json` specifies the build and output directory. Add only the four public variables above to production, then deploy. Book uploads bypass Vercel Functions. No server or paid database integration is needed.
+
+For a local production build preview, run `npm run build` and `npm run preview`. This uses the cloud library and its own remembered device session.
+
+## Reader
+
+- Filename library, upload, deletion, continue-reading shortcut, and progress indicators.
+- Continuous PDF scrolling with page jumps and zoom. Only nearby pages render to limit memory use.
+- EPUB vertical continuous scrolling or horizontal bordered pages, two on wide screens and one on narrow screens. Supports wheel, trackpad, touch, and keyboard navigation.
+- One shared toolbar for page navigation and zoom. The percentage appears only away from 100%.
+- Automatic resume using PDF page/offset or an EPUB content anchor. EPUB page numbers use stable text locations across the book.
+- Light styling, bundled fonts, PWA manifest, and app icons.
+
+Accepts ordinary `.pdf` and `.epub` files. Password-protected PDFs, restricted Kindle downloads, and unusual fixed-layout EPUBs may be unsupported. Book scripts are disabled. Offline startup is not implemented.
+
+PWA installation depends on the browser. Use a supported browser's install-app action to launch Leafmark from its own icon. There is no service worker or offline reading promise. Native installation still needs manual verification on the target devices.
 
 ## Checks
 
 ```sh
 npm run build
 npm run test:e2e
+npm run test:cloud
+npm run test:security
 ```
 
-The browser tests cover PDF and EPUB reading and position persistence, file uploads and validation, deletion, and a phone-sized layout. Install the test browser once if needed:
+Install Chromium once with `npx playwright install chromium`. The 11 local browser tests use port 4173 and explicit IndexedDB mode. Live cloud tests use port 4174 and `.env.local`; they create and remove uniquely named test books. Traces and videos are disabled to avoid recording credentials.
 
-```sh
-npx playwright install chromium
-```
+Cloud tests cover incorrect codes, remembered sessions, device-local locking, 7 MiB TUS upload, PDF and EPUB resume across desktop/phone contexts, failed-save recovery, idle-reader protection, and deletion. `test:security` also requires the logged-in CLI to provision and remove a temporary unrelated identity and verify that both it and anonymous visitors are denied access. No check changes billing settings.
 
-For a local production build preview:
-
-```sh
-npm run build
-npm run preview
-```
-
-The preview uses a different port and therefore a separate browser library.
+To check a hosted deployment, run `LEAFMARK_TEST_URL=https://your-deployment.vercel.app npm run test:cloud` using the same configured owner. The tests leave your other books alone.
 
 The included samples can be regenerated with `node scripts/generate-samples.mjs`.

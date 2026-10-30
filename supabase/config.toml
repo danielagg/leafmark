@@ -1,0 +1,23 @@
+# Hosted project remains on its existing Free plan. Only authentication settings
+# below are pushed; no compute, billing, add-ons, or paid features are configured.
+project_id = "leafmark"
+
+[db]
+major_version = 17
+
+[db.migrations]
+enabled = true
+
+[db.seed]
+enabled = false
+
+[auth]
+enabled = true
+enable_signup = false
+enable_anonymous_sign_ins = false
+minimum_password_length = 12
+
+[auth.email]
+# Keep password sign-in available. The global auth.enable_signup above denies
+# public registration; this provider switch must stay on for the owner to log in.
+enable_signup = true

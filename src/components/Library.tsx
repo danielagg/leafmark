@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
 import type { DragEvent } from 'react';
-import { ArrowRight, BookOpen, Check, Leaf, LoaderCircle, Plus, Trash2, Upload } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, Leaf, LoaderCircle, LockKeyhole, Plus, Trash2, Upload } from 'lucide-react';
 import type { Book, LibraryProps } from '../types';
+import './auth-gate.css';
 
 function readableBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -13,13 +14,14 @@ function percentage(book: Book) {
   return Math.round(Math.min(1, Math.max(0, book.progress || 0)) * 100);
 }
 
-export default function Library({ books, onOpen, onUpload, onDelete, onSamples, busy, loading }: LibraryProps) {
+export default function Library({ books, onOpen, onUpload, onDelete, onSamples, busy, loading, cloud = false, onLock, uploadProgress }: LibraryProps) {
   const input = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
   const [dragging, setDragging] = useState(false);
   const sorted = [...books].sort((a, b) => a.filename.localeCompare(b.filename, undefined, { sensitivity: 'base', numeric: true }));
   const recent = [...books].filter(book => book.lastReadAt !== null).sort((a, b) => (b.lastReadAt ?? 0) - (a.lastReadAt ?? 0))[0];
   const unavailable = loading || busy;
+  const uploadPercent = uploadProgress && Number.isFinite(uploadProgress.percent) ? Math.round(Math.min(100, Math.max(0, uploadProgress.percent))) : 0;
 
   function dragEnter(event: DragEvent<HTMLElement>) {
     if (!event.dataTransfer.types.includes('Files')) return;
@@ -52,7 +54,7 @@ export default function Library({ books, onOpen, onUpload, onDelete, onSamples, 
         onChange={event => { const files = Array.from(event.target.files ?? []); if (files.length) onUpload(files); event.target.value = ''; }} />
       <header className="library-header">
         <a className="wordmark" href="./" aria-label="Leafmark home"><span className="brand-icon"><Leaf size={23} strokeWidth={1.7} aria-hidden="true" /></span>Leafmark</a>
-        <span className="local-indicator"><span aria-hidden="true" />Local library</span>
+        <div className="library-header-actions"><span className="local-indicator"><span aria-hidden="true" />{cloud ? 'Private library' : 'Local library'}</span>{onLock && <button className="icon-button" onClick={onLock} aria-label="Lock library" title="Lock library on this device"><LockKeyhole size={16} strokeWidth={1.6} aria-hidden="true" /></button>}</div>
       </header>
 
       <main className="library-main" id="main-content">
@@ -60,6 +62,8 @@ export default function Library({ books, onOpen, onUpload, onDelete, onSamples, 
           <div><p className="eyebrow">A little space to read</p><h1>Your library<span className="heading-period">.</span></h1><p className="intro-copy">Good books. A quiet place. Pick up where you left off.</p></div>
           {addButton('intro-add')}
         </div>
+
+        {uploadProgress && <div className="library-upload-progress"><div className="library-upload-label"><span>{uploadProgress.filename}</span><span>{uploadPercent}%</span></div><div className="progress-track" role="progressbar" aria-label={`Uploading ${uploadProgress.filename}`} aria-valuenow={uploadPercent} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${uploadPercent}%` }} /></div></div>}
 
         {loading ? (
           <section className="library-loading" aria-label="Loading your library" aria-busy="true"><p className="section-label" role="status">Opening your library…</p>{[0, 1, 2].map(index => <div className="skeleton-row" key={index}><span className="skeleton skeleton-badge" /><span className="skeleton skeleton-line" /><span className="skeleton skeleton-short" /></div>)}</section>
@@ -69,7 +73,7 @@ export default function Library({ books, onOpen, onUpload, onDelete, onSamples, 
             <p className="eyebrow">Make yourself at home</p><h2 id="empty-title">Your next chapter starts here.</h2>
             <p>Add a PDF or EPUB to begin.<br />You can drop your books right here, too.</p>
             <div className="empty-actions">{addButton()}<button className="text-button" onClick={onSamples} disabled={unavailable}>Try sample books <ArrowRight size={15} aria-hidden="true" /></button></div>
-            <span className="empty-file-note">PDF & EPUB · Stored on this device</span>
+            <span className="empty-file-note">PDF & EPUB · {cloud ? 'Cloud library' : 'Stored on this device'}</span>
           </section>
         ) : (
           <>
@@ -97,7 +101,7 @@ export default function Library({ books, onOpen, onUpload, onDelete, onSamples, 
         )}
         <div className="busy-announcement visually-hidden" role="status" aria-live="polite">{busy ? 'Adding books to your library. Please wait.' : ''}</div>
       </main>
-      <footer className="library-footer"><span><span className="footer-dot" aria-hidden="true" />Saved on this device</span><span>A page at a time.</span></footer>
+      <footer className="library-footer"><span><span className="footer-dot" aria-hidden="true" />{cloud ? 'Saved to your library' : 'Saved on this device'}</span><span>A page at a time.</span></footer>
       {dragging && <div className="drop-overlay" aria-hidden="true"><div><Upload size={32} strokeWidth={1.4} /><h2>A new chapter.</h2><p>Drop your PDF or EPUB books to add them.</p></div></div>}
     </div>
   );

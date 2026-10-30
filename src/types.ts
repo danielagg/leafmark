@@ -11,12 +11,15 @@ export interface Book {
   lastReadAt: number | null;
   position: ReadingPosition | null;
   progress: number;
-  file: Blob;
+  file: Blob | null;
+  storagePath?: string;
   sample?: boolean;
 }
 
+export type ReadableBook = Book & { file: Blob };
+
 export interface ReaderProps {
-  book: Book;
+  book: ReadableBook;
   onProgress: (position: ReadingPosition, progress: number) => void;
   registerBeforeClose?: (flush: (() => void) | null) => void;
 }
@@ -29,4 +32,7 @@ export interface LibraryProps {
   onSamples: () => void;
   busy: boolean;
   loading: boolean;
+  cloud?: boolean;
+  onLock?: () => void;
+  uploadProgress?: { filename: string; percent: number } | null;
 }
