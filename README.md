@@ -56,7 +56,7 @@ Supabase Free has limited storage and transfer allowances and may pause inactive
 
 Import this repository as a Vite project. `vercel.json` specifies the build and output directory. Add only the four public variables above to production, then deploy. Book uploads bypass Vercel Functions. No server or paid database integration is needed.
 
-The production project and public variables are configured, and the live deployment passed the cloud browser tests. Automatic deployments on future Git pushes still require connecting `danielagg/leafmark` in [Vercel Git settings](https://vercel.com/daniel-aggs-projects/leafmark/settings/git). The connected API deployed the current commit, but cannot attach a repository to an existing project; the local CLI needs a Vercel login to do that step.
+The production project and public variables are configured, and the live deployment passed the cloud browser tests. The repository is connected to Vercel for automatic deployment on pushes to `main`.
 
 For a local production build preview, run `npm run build` and `npm run preview`. This uses the cloud library and its own remembered device session.
 
@@ -64,8 +64,9 @@ For a local production build preview, run `npm run build` and `npm run preview`.
 
 - Filename library, upload, deletion, continue-reading shortcut, and progress indicators.
 - Continuous PDF scrolling with page jumps and zoom. Only nearby pages render to limit memory use.
-- EPUB vertical continuous scrolling or horizontal bordered pages, two on wide screens and one on narrow screens. Supports wheel, trackpad, touch, and keyboard navigation.
+- EPUB vertical continuous scrolling or horizontal bordered pages that use the available screen width, two on wide screens and one on narrow screens. Supports wheel, trackpad, touch, and keyboard navigation.
 - One shared toolbar for page navigation and zoom. The percentage appears only away from 100%.
+- A shared bottom progress bar with a highlighted percentage read in both formats.
 - Automatic resume using PDF page/offset or an EPUB content anchor. EPUB page numbers use stable text locations across the book.
 - Light styling, bundled fonts, PWA manifest, and app icons.
 

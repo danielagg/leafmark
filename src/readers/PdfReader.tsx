@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { FileWarning } from 'lucide-react';
 import ReaderToolbar from '../components/ReaderToolbar';
+import ReaderFooter from '../components/ReaderFooter';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -91,6 +92,7 @@ function PdfSession({ book, onProgress, registerBeforeClose }: ReaderProps) {
   const [zoom, setZoom] = useState(1);
   const [pixelRatio, setPixelRatio] = useState(() => window.devicePixelRatio || 1);
   const [page, setPage] = useState(1);
+  const [progress, setProgress] = useState(() => clamp(finite(book.progress, 0), 0, 1));
   const [visible, setVisible] = useState({ top: 0, height: 800 });
   const viewportRef = useRef<HTMLDivElement>(null);
   const stackRef = useRef<HTMLDivElement>(null);
@@ -135,6 +137,13 @@ function PdfSession({ book, onProgress, registerBeforeClose }: ReaderProps) {
     if (low < pages.length - 1 && y >= pages[low].top + pages[low].height) low += 1;
     return { page: low + 1, offset: clamp((y - pages[low].top) / Math.max(1, pages[low].height), 0, 1) };
   };
+  const readingProgress = (position: Position) => {
+    const viewport = viewportRef.current;
+    const count = geometryRef.current.length;
+    if (!count) return 0;
+    if (viewport && viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 1) return 1;
+    return clamp((position.page - 1 + position.offset) / count, 0, 1);
+  };
   const observePosition = () => {
     const position = readPosition();
     const viewport = viewportRef.current;
@@ -143,6 +152,7 @@ function PdfSession({ book, onProgress, registerBeforeClose }: ReaderProps) {
     expectedTopRef.current = viewport.scrollTop;
     anchorRef.current = position;
     setPage(position.page);
+    setProgress(readingProgress(position));
     setVisible({ top: viewport.scrollTop, height: viewport.clientHeight });
   };
   const flush = () => {
@@ -154,7 +164,7 @@ function PdfSession({ book, onProgress, registerBeforeClose }: ReaderProps) {
     dirtyRef.current = false;
     if (previous && previous.page === position.page && Math.abs(previous.offset - position.offset) < 0.00001) return;
     lastSavedRef.current = { ...position };
-    callbackRef.current({ type: 'pdf', ...position, layout: 'continuous' }, clamp((position.page - 1 + position.offset) / geometryRef.current.length, 0, 1));
+    callbackRef.current({ type: 'pdf', ...position, layout: 'continuous' }, readingProgress(position));
   };
   const flushRef = useRef(flush);
   flushRef.current = flush;
@@ -255,6 +265,7 @@ function PdfSession({ book, onProgress, registerBeforeClose }: ReaderProps) {
     expectedTopRef.current = viewport.scrollTop;
     readyRef.current = true;
     setPage(anchor.page);
+    setProgress(readingProgress(anchor));
     setVisible({ top: viewport.scrollTop, height: viewport.clientHeight });
   }, [geometry, width]);
 
@@ -322,7 +333,7 @@ function PdfSession({ book, onProgress, registerBeforeClose }: ReaderProps) {
         {!pdf && !error && <div className="pdf-status" role="status"><span className="pdf-spinner" />Opening your PDF…</div>}
         {error && <div className="pdf-status pdf-error" role="alert"><FileWarning size={30} strokeWidth={1.5} /><h2>Unable to display this PDF</h2><p>{error}</p></div>}
       </div>
-      <div className="pdf-footer"><span>Scroll to read</span><span aria-live="polite">{pdf ? `Page ${page} of ${pdf.numPages}` : 'Local file'}</span></div>
+      <ReaderFooter className="pdf-footer" label={pdf ? `Page ${page} of ${pdf.numPages}` : 'Preparing your book'} percentage={progress * 100} />
     </section>
   );
 }

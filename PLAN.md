@@ -4,7 +4,7 @@ Updated 2026-10-30. The reader MVP and private Supabase library are implemented.
 
 The default app uses a code-only Supabase owner session, private Storage, and shared reading positions. The schema and access policies are applied to the existing project; its plan and billing settings are unchanged. An explicit development-only local preview retains browser storage. See [README.md](README.md) for setup, tests, and run instructions. Browser tests cover cloud resume and access isolation; native PWA installation on the target devices still needs manual verification.
 
-Production is live at [leafmark-lemon.vercel.app](https://leafmark-lemon.vercel.app) and passed the cloud browser tests. Connecting future Git pushes to automatic deployment remains a Vercel project configuration step documented in the README.
+Production is live at [leafmark-lemon.vercel.app](https://leafmark-lemon.vercel.app) and passed the cloud browser tests. The repository is connected to Vercel for automatic deployment on pushes to `main`.
 
 ## Product intent
 

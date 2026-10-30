@@ -5,6 +5,7 @@ import { BookOpen, RotateCcw } from 'lucide-react';
 import loraFont from '@fontsource/lora/files/lora-latin-400-normal.woff2?url';
 import type { ReaderProps } from '../types';
 import ReaderToolbar from '../components/ReaderToolbar';
+import ReaderFooter from '../components/ReaderFooter';
 import './epub-reader.css';
 
 function bounded<T>(promise: PromiseLike<T>, milliseconds = 15000): Promise<T> {
@@ -677,6 +678,6 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
       {loading && <div className="epub-overlay" role="status"><BookOpen size={26} aria-hidden="true" /><span>Opening your book…</span></div>}
       {error && <div className="epub-overlay epub-error" role="alert"><BookOpen size={28} aria-hidden="true" /><p>{error}</p><button type="button" onClick={() => setAttempt(value => value + 1)}><RotateCcw size={16} aria-hidden="true" />Try again</button></div>}
     </div>
-    <footer className="epub-footer"><span title={chapter}>{sectionLabel || 'Preparing your book'}</span><span>{percentage}% read</span></footer>
+    <ReaderFooter className="epub-footer" label={sectionLabel || 'Preparing your book'} title={chapter} percentage={percentage} />
   </section>;
 }

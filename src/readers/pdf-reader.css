@@ -25,9 +25,7 @@
 .pdf-error h2 { margin: 0; font-size: 18px; font-weight: 500; color: #285b49; }
 .pdf-error p { max-width: 380px; margin: 0; line-height: 1.7; }
 .pdf-retry-button { padding: 9px 15px; border: 1px solid #285b49; border-radius: 6px; background: #285b49; color: #fff; }
-.pdf-footer { display: flex; justify-content: space-between; flex-shrink: 0; gap: 12px; padding: 10px 24px; border-top: 1px solid #dfe6dd; color: #7a887e; font-size: 11px; letter-spacing: .02em; background: #f7f9f5; }
 @media (max-width: 600px) {
   .pdf-viewport { padding: 16px 12px 24px; }
-  .pdf-footer { padding: 9px 16px; }
 }
 @media (prefers-reduced-motion: reduce) { .pdf-spinner { animation: none; } }

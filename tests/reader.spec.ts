@@ -269,6 +269,11 @@ for (const mobile of [false, true]) {
       return false;
     })).toBe(true);
     if (mobile) await page.screenshot({ path: 'test-results/pdf-mobile.png' });
+    await viewport.evaluate(element => { element.scrollTop = element.scrollHeight; });
+    await expect(page.getByRole('progressbar', { name: 'Reading progress', exact: true })).toHaveAttribute('aria-valuenow', '100');
+    await expect(page.locator('.reader-progress-value')).toHaveText('100% read');
+    await page.getByRole('button', { name: 'Back to library' }).click();
+    await expect(page.getByRole('button', { name: 'Open The art of noticing.pdf' })).toContainText('100% read');
     expect(errors).toEqual([]);
   });
 }
@@ -306,6 +311,8 @@ for (const mobile of [false, true]) {
       const input = toolbar.getByRole('spinbutton', { name: 'Page number' });
       await expect(toolbar.getByRole('button', { name: 'Next page', exact: true })).toBeEnabled({ timeout: 20000 });
       await expect(input).toHaveValue('1');
+      const progress = page.getByRole('progressbar', { name: 'Reading progress', exact: true });
+      await expect(progress).toHaveAttribute('aria-valuenow', '0');
       await expect(toolbar.getByRole('button', { name: 'Previous page', exact: true })).toBeDisabled();
       await expect(toolbar.locator('.reader-zoom-value')).toHaveCount(0);
       await expect(page.getByText('Fit width', { exact: true })).toHaveCount(0);
@@ -323,6 +330,7 @@ for (const mobile of [false, true]) {
       await input.fill('3');
       await input.press('Enter');
       await expect(input).toHaveValue('3');
+      await expect.poll(async () => Number(await progress.getAttribute('aria-valuenow'))).toBeGreaterThan(0);
       await toolbar.getByRole('button', { name: 'Zoom in', exact: true }).click();
       await expect(toolbar.locator('.reader-zoom-value')).toHaveText('110%');
       // Zoom never changes the stable book-wide page count.
@@ -357,6 +365,7 @@ for (const mobile of [false, true]) {
     await expect(horizontal).toHaveAttribute('aria-pressed', 'true');
     await expect(horizontal).toBeEnabled({ timeout: 20000 });
     await expect(reader.locator('.epub-sheet')).toHaveCount(mobile ? 1 : 2);
+    expect((await reader.locator('.epub-page').boundingBox())!.width).toBeGreaterThanOrEqual(page.viewportSize()!.width * .95);
     await expect(reader.locator('.reader-page-count')).toHaveText(total!);
 
     // Count real laid-out text inside each bordered sheet, rather than accepting
@@ -417,6 +426,10 @@ for (const mobile of [false, true]) {
       await expect.poll(async () => (await visibleWords()).perSheet.every(count => count > 15)).toBe(true);
       await page.setViewportSize({ width: 1440, height: 1000 });
       await expect(reader.locator('.epub-sheet')).toHaveCount(2);
+      await page.setViewportSize({ width: 1920, height: 1000 });
+      await expect.poll(async () => (await reader.locator('.epub-page').boundingBox())!.width).toBeGreaterThanOrEqual(1920 * .95);
+      await expect(reader.locator('.epub-sheet')).toHaveCount(2);
+      await expect.poll(async () => (await reader.locator('.epub-sheet').first().boundingBox())!.width).toBeGreaterThan(1920 * .44);
     }
     await page.screenshot({ path: `test-results/epub-horizontal-${mobile ? 'mobile' : 'desktop'}.png` });
 
