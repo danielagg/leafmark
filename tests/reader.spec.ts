@@ -158,6 +158,11 @@ for (const mobile of [false, true]) {
       throw new Error('No visible reading text in loaded EPUB iframes');
     }, { scrollBy, leave, zoomBeforeLeaving });
 
+    await expect(reader).toHaveAttribute('data-theme', 'light');
+    const beforeTheme = await readingPosition();
+    await page.getByRole('button', { name: 'Switch to dark mode', exact: true }).click();
+    await expect(page.frameLocator('iframe').first().locator('body')).toHaveCSS('background-color', 'rgb(24, 33, 28)');
+    expect(await readingPosition()).toEqual(beforeTheme);
     for (let reopen = 0; reopen < 3; reopen += 1) {
       const before = await readingPosition();
       const saved = await readingPosition(reopen === 0 ? 213 : 97, true, reopen === 2);
@@ -168,6 +173,8 @@ for (const mobile of [false, true]) {
       await page.getByRole('button', { name: 'Open A little room to read.epub' }).click();
       await expect(viewport).toHaveAttribute('aria-busy', 'false', { timeout: 20000 });
       await expect(reader.locator('.epub-overlay')).toHaveCount(0);
+      await expect(reader).toHaveAttribute('data-theme', 'dark');
+      await expect(page.frameLocator('iframe').first().locator('p').first()).toHaveCSS('color', 'rgb(220, 229, 220)');
       await expect.poll(async () => {
         const restored = await readingPosition();
         return {
@@ -188,6 +195,11 @@ for (const mobile of [false, true]) {
       expect(await container.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
     }
     if (mobile) await page.screenshot({ path: 'test-results/epub-mobile.png' });
+    const beforeLight = await readingPosition();
+    await page.getByRole('button', { name: 'Switch to light mode', exact: true }).click();
+    await expect(reader).toHaveAttribute('data-theme', 'light');
+    await expect(page.frameLocator('iframe').first().locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    expect(await readingPosition()).toEqual(beforeLight);
     expect(errors).toEqual([]);
   });
 }
@@ -358,12 +370,15 @@ for (const mobile of [false, true]) {
     const horizontal = page.getByRole('button', { name: 'Horizontal scrolling', exact: true });
     const vertical = page.getByRole('button', { name: 'Vertical scrolling', exact: true });
     await expect(vertical).toHaveAttribute('aria-pressed', 'true');
+    await expect(reader).toHaveAttribute('data-theme', 'light');
+    await page.getByRole('button', { name: 'Switch to dark mode', exact: true }).click();
     await expect(horizontal).toBeEnabled();
     const total = await reader.locator('.reader-page-count').textContent();
     await horizontal.click();
     await expect(reader).toHaveAttribute('data-reading-mode', 'horizontal');
     await expect(horizontal).toHaveAttribute('aria-pressed', 'true');
     await expect(horizontal).toBeEnabled({ timeout: 20000 });
+    await expect(page.frameLocator('iframe').first().locator('body')).toHaveCSS('background-color', 'rgb(24, 33, 28)');
     await expect(reader.locator('.epub-sheet')).toHaveCount(mobile ? 1 : 2);
     expect((await reader.locator('.epub-page').boundingBox())!.width).toBeGreaterThanOrEqual(page.viewportSize()!.width * .95);
     await expect(reader.locator('.reader-page-count')).toHaveText(total!);

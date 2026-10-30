@@ -16,7 +16,23 @@ function bounded<T>(promise: PromiseLike<T>, milliseconds = 15000): Promise<T> {
 }
 const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
 type ReadingMode = 'vertical' | 'horizontal';
+type ReadingTheme = 'light' | 'dark';
 const modePreference = 'leafmark-epub-reading-mode';
+const themePreference = 'leafmark-epub-theme';
+
+function applyTheme(doc: Document, theme: ReadingTheme) {
+  let style = doc.querySelector<HTMLStyleElement>('style[data-leafmark-theme]');
+  if (!style) {
+    style = doc.createElement('style');
+    style.setAttribute('data-leafmark-theme', '');
+    doc.head.append(style);
+  }
+  style.textContent = theme === 'dark' ? `
+    html, body { color-scheme: dark; color: #dce5dc !important; background: #18211c !important; }
+    body * { color: inherit !important; background-color: transparent !important; border-color: #46564a !important; }
+    a, a * { color: #a9cbb8 !important; }
+  ` : 'html { color-scheme: light; }';
+}
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
 function flatten(items: NavItem[]): NavItem[] {
   return items.flatMap(item => [item, ...flatten(item.subitems || [])]);
@@ -39,6 +55,12 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
     return 'vertical';
   });
   const modeRef = useRef(mode);
+  const [theme, setTheme] = useState<ReadingTheme>(() => {
+    try { if (localStorage.getItem(themePreference) === 'dark') return 'dark'; } catch { /* Optional device preference. */ }
+    return 'light';
+  });
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
   const [pageFrames, setPageFrames] = useState<{ left: number; width: number }[]>([]);
   const [attempt, setAttempt] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -51,6 +73,13 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
   const controls = useRef<{ page: (page: number) => void; zoom: (zoom: number) => void; mode: (mode: ReadingMode) => void } | null>(null);
   const [sectionLabel, setSectionLabel] = useState('');
   const [percentage, setPercentage] = useState(Math.round(book.progress * 100));
+
+  useEffect(() => {
+    try { localStorage.setItem(themePreference, theme); } catch { /* Reading still works without local storage. */ }
+    viewport.current?.querySelectorAll('iframe').forEach(iframe => {
+      if (iframe.contentDocument) applyTheme(iframe.contentDocument, theme);
+    });
+  }, [theme]);
 
   useEffect(() => {
     const host = viewport.current;
@@ -408,6 +437,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
         html { background: white; font-size: ${18 * currentZoom}px !important; } body { font-family: LeafmarkLora, Lora, Georgia, serif; font-size: ${18 * currentZoom}px !important; line-height: 1.85; color: #26362e; background: white; padding-top: 20px !important; padding-bottom: ${currentMode === 'horizontal' ? 20 : 36}px !important; }
         img, svg, video { max-width: 100%; height: auto; } a { color: #285b49; }`;
       doc.head.append(style);
+      applyTheme(doc, themeRef.current);
       contents.window.frameElement?.setAttribute('title', 'EPUB chapter');
       function click(event: MouseEvent) {
         const anchor = (event.target as Element | null)?.closest?.('a[href]');
@@ -668,9 +698,10 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
     };
   }, [book.id, book.file, attempt, registerBeforeClose]);
 
-  return <section className={`epub-reader epub-reader--${mode}`} data-reading-mode={mode} aria-label="EPUB reader">
+  return <section className={`epub-reader epub-reader--${mode}`} data-reading-mode={mode} data-theme={theme} aria-label="EPUB reader">
     <ReaderToolbar page={page} totalPages={totalPages} zoom={zoom} disabled={loading || !!error || transitioning} minZoom={.6} maxZoom={2}
       readingMode={mode} onReadingModeChange={next => controls.current?.mode(next)}
+      theme={theme} onThemeChange={setTheme}
       onPageChange={next => controls.current?.page(next)} onZoomChange={next => controls.current?.zoom(next)} />
     <div className="epub-page">
       <div ref={viewport} className="epub-viewport" aria-busy={loading} inert={!!error || loading} />

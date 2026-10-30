@@ -38,3 +38,10 @@
   .has-reading-mode .reader-page-form input { width: 36px; }
   .has-reading-mode .reader-toolbar-options { gap: 4px; }
 }
+@media (max-width: 600px) {
+  .reader-toolbar.has-theme { flex-wrap: wrap; row-gap: 2px; }
+  .has-theme .reader-toolbar-options { margin-left: auto; gap: 4px; }
+  .has-theme .reader-page-form label { display: none; }
+  .has-theme .reader-page-form input { width: 36px; }
+  .has-theme .reader-theme-button, .has-theme .reader-zoom-controls .reader-control-button { width: 32px; min-width: 32px; }
+}

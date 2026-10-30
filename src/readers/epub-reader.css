@@ -1,5 +1,8 @@
 .epub-reader {
   --epub-pine: #285b49;
+  --epub-paper: #fff;
+  --epub-surround: #e4ebe4;
+  --epub-border: #b9c6bb;
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -8,7 +11,7 @@
   flex-direction: column;
   overflow: hidden;
   color: #26362e;
-  background: #fff;
+  background: var(--epub-paper);
   font-family: 'DM Sans', sans-serif;
 }
 
@@ -19,7 +22,7 @@
   width: min(100%, 1000px);
   align-self: center;
   overflow: hidden;
-  background: #fff;
+  background: var(--epub-paper);
 }
 
 .epub-viewport {
@@ -40,7 +43,7 @@
   flex-direction: column;
   gap: 14px;
   padding: 28px;
-  background: #fff;
+  background: var(--epub-paper);
   color: var(--epub-pine);
   text-align: center;
   font-size: 14px;
@@ -79,8 +82,8 @@
   .epub-error button { transition: none; }
 }
 
-.epub-reader--horizontal { background: #e4ebe4; }
-.epub-reader--horizontal .epub-page { width: 100%; background: #e4ebe4; }
+.epub-reader--horizontal { background: var(--epub-surround); }
+.epub-reader--horizontal .epub-page { width: 100%; background: var(--epub-surround); }
 .epub-reader--horizontal .epub-viewport { inset: 16px; }
 .epub-reader--horizontal .epub-container { overscroll-behavior: contain; touch-action: pan-y; }
 .epub-paper-frames { position: absolute; inset: 16px; pointer-events: none; z-index: 1; }
@@ -88,10 +91,29 @@
   position: absolute;
   top: 8px;
   bottom: 8px;
-  border: 1px solid #b9c6bb;
-  box-shadow: 0 0 0 8px #e4ebe4, inset 0 0 0 1px #fff;
+  border: 1px solid var(--epub-border);
+  box-shadow: 0 0 0 8px var(--epub-surround), inset 0 0 0 1px var(--epub-paper);
 }
 .epub-reader--horizontal .epub-overlay { z-index: 2; }
 @media (max-width: 600px) {
   .epub-reader--horizontal .epub-viewport, .epub-paper-frames { inset: 8px; }
 }
+
+.epub-reader[data-theme="dark"] { --epub-paper: #18211c; --epub-surround: #101813; --epub-border: #46564a; --epub-pine: #a9cbb8; color: #dce5dc; color-scheme: dark; }
+.epub-reader[data-theme="dark"] .reader-toolbar, .epub-reader[data-theme="dark"] .reader-footer { background: #1c2820; color: #b6c7bb; border-color: #36463b; }
+.epub-reader[data-theme="dark"] .reader-control-button { color: #b9d5c3; }
+.epub-reader[data-theme="dark"] .reader-control-button:hover:not(:disabled) { background: #304336; }
+.epub-reader[data-theme="dark"] .reader-page-form input, .epub-reader[data-theme="dark"] .reader-mode-controls { color: #dce5dc; background: #18211c; border-color: #46564a; }
+.epub-reader[data-theme="dark"] .reader-mode-button[aria-pressed="true"], .epub-reader[data-theme="dark"] .reader-progress-value { color: #c4e0ce; background: #304336; }
+.epub-reader[data-theme="dark"] .reader-page-count, .epub-reader[data-theme="dark"] .reader-zoom-value { color: #b6c7bb; }
+.epub-reader[data-theme="dark"] .reader-progress-track { background: #36463b; }
+.epub-reader[data-theme="dark"] .reader-progress-fill { background: #a9cbb8; }
+.epub-reader[data-theme="dark"] .epub-container { scrollbar-color: #526759 transparent; }
+.epub-reader[data-theme="dark"] button:focus-visible, .epub-reader[data-theme="dark"] input:focus-visible { outline-color: #a9cbb8; }
+.epub-reader[data-theme="dark"] .epub-error button { background: #1c2820; border-color: #46564a; }
+.reader-shell:has(.epub-reader[data-theme="dark"]) .reader-header { color: #dce5dc; background: #1c2820; border-color: #36463b; }
+.reader-shell:has(.epub-reader[data-theme="dark"]) .reader-header .icon-button, .reader-shell:has(.epub-reader[data-theme="dark"]) .reader-brand-icon { color: #b9d5c3; }
+.reader-shell:has(.epub-reader[data-theme="dark"]) .reader-back { background: #18211c; border-color: #46564a; }
+.reader-shell:has(.epub-reader[data-theme="dark"]) .reader-header .icon-button:hover { background: #304336; }
+.reader-shell:has(.epub-reader[data-theme="dark"]) .reader-header .icon-button:focus-visible { outline-color: #a9cbb8; }
+.reader-shell:has(.epub-reader[data-theme="dark"]) .reader-status:not(.save-error) { color: #b6c7bb; }
