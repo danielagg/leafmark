@@ -2,6 +2,8 @@
 
 A small, private PDF and EPUB reader. Add your files, open a book, and pick up where you left off on another device.
 
+Live library: [leafmark-lemon.vercel.app](https://leafmark-lemon.vercel.app).
+
 ## Run locally
 
 Requires Node 22.12+ or Node 24.
@@ -53,6 +55,8 @@ Supabase Free has limited storage and transfer allowances and may pause inactive
 ## Host on Vercel
 
 Import this repository as a Vite project. `vercel.json` specifies the build and output directory. Add only the four public variables above to production, then deploy. Book uploads bypass Vercel Functions. No server or paid database integration is needed.
+
+The production project and public variables are configured, and the live deployment passed the cloud browser tests. Automatic deployments on future Git pushes still require connecting `danielagg/leafmark` in [Vercel Git settings](https://vercel.com/daniel-aggs-projects/leafmark/settings/git). The connected API deployed the current commit, but cannot attach a repository to an existing project; the local CLI needs a Vercel login to do that step.
 
 For a local production build preview, run `npm run build` and `npm run preview`. This uses the cloud library and its own remembered device session.
 

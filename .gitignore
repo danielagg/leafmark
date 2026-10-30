@@ -9,3 +9,4 @@ playwright-report/
 *.tsbuildinfo
 supabase/.temp/
 supabase/.branches/
+.vercel/
