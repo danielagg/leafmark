@@ -1,0 +1,33 @@
+.pdf-reader {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  color: #29453a;
+  background: #edf1ec;
+  font-family: 'DM Sans', sans-serif;
+}
+.pdf-reader * { box-sizing: border-box; }
+.pdf-viewport:focus-visible { outline: 2px solid #285b49; outline-offset: 2px; }
+.pdf-stage { position: relative; display: flex; flex: 1; min-height: 0; overflow: hidden; }
+.pdf-viewport { flex: 1; min-width: 0; padding: 30px clamp(14px, 4vw, 64px) 40px; overflow-x: auto; overflow-y: auto; touch-action: pan-x pan-y pinch-zoom; overscroll-behavior: contain; scrollbar-color: #bdcbbf transparent; overflow-anchor: none; }
+.pdf-pages { display: flex; flex-direction: column; align-items: center; gap: 20px; min-width: 0; }
+.pdf-page { position: relative; flex: none; background: #fff; box-shadow: 0 4px 24px #233b2c12, 0 0 0 1px #233b2c08; }
+.pdf-canvas { display: block; width: 100%; height: 100%; }
+.pdf-page-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; text-align: center; background: #fffffff2; font-size: 13px; }
+.pdf-page-error p { max-width: 340px; line-height: 1.6; }
+.pdf-status { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 32px; background: #edf1eced; text-align: center; font-size: 14px; color: #536c5b; }
+.pdf-spinner { width: 25px; height: 25px; border: 2px solid #cbd9ce; border-top-color: #285b49; border-radius: 50%; animation: pdf-spin .8s linear infinite; }
+@keyframes pdf-spin { to { transform: rotate(360deg); } }
+.pdf-error h2 { margin: 0; font-size: 18px; font-weight: 500; color: #285b49; }
+.pdf-error p { max-width: 380px; margin: 0; line-height: 1.7; }
+.pdf-retry-button { padding: 9px 15px; border: 1px solid #285b49; border-radius: 6px; background: #285b49; color: #fff; }
+.pdf-footer { display: flex; justify-content: space-between; flex-shrink: 0; gap: 12px; padding: 10px 24px; border-top: 1px solid #dfe6dd; color: #7a887e; font-size: 11px; letter-spacing: .02em; background: #f7f9f5; }
+@media (max-width: 600px) {
+  .pdf-viewport { padding: 16px 12px 24px; }
+  .pdf-footer { padding: 9px 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .pdf-spinner { animation: none; } }

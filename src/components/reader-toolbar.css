@@ -1,0 +1,40 @@
+.reader-toolbar { display: flex; flex: 0 0 auto; width: 100%; align-items: center; justify-content: space-between; gap: 16px; min-height: 60px; padding: 8px 24px; border-bottom: 1px solid #e2e8e1; background: #fff; color: #29453a; font: 400 13px 'DM Sans', sans-serif; }
+.reader-page-controls, .reader-page-form, .reader-zoom-controls { display: flex; align-items: center; gap: 10px; }
+.reader-toolbar .reader-control-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0; border: 0; border-radius: 7px; color: #285b49; background: transparent; cursor: pointer; touch-action: manipulation; }
+.reader-toolbar .reader-control-button:hover:not(:disabled) { background: #edf3ee; }
+.reader-toolbar .reader-control-button:disabled { cursor: default; opacity: .35; }
+.reader-toolbar button:focus-visible, .reader-toolbar input:focus-visible { outline: 2px solid #285b49; outline-offset: 2px; }
+.reader-page-form input { width: 54px; height: 32px; padding: 4px; border: 1px solid #dce4dc; border-radius: 6px; background: #fafbf9; color: #285b49; font: inherit; text-align: center; appearance: textfield; -moz-appearance: textfield; }
+.reader-page-form input::-webkit-inner-spin-button, .reader-page-form input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.reader-page-count { color: #78847c; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.reader-zoom-value { min-width: 40px; text-align: center; color: #607367; font-size: 12px; font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) {
+  .reader-toolbar { gap: 6px; min-height: 56px; padding: 6px 8px; }
+  .reader-page-controls, .reader-page-form, .reader-zoom-controls { gap: 4px; }
+  .reader-toolbar .reader-control-button { width: 36px; height: 44px; min-width: 36px; min-height: 44px; }
+  .reader-page-form input { width: 42px; }
+  .reader-zoom-value { min-width: 34px; font-size: 11px; }
+}
+@media (max-width: 340px) {
+  .reader-toolbar { padding-inline: 6px; gap: 2px; font-size: 12px; }
+  .reader-page-controls, .reader-page-form, .reader-zoom-controls { gap: 2px; }
+  .reader-toolbar .reader-control-button { width: 32px; min-width: 32px; }
+  .reader-page-form input { width: 36px; }
+}
+.reader-toolbar-options { display: flex; align-items: center; gap: 18px; }
+.reader-mode-controls { display: flex; align-items: center; padding: 2px; gap: 2px; border: 1px solid #e1e7df; border-radius: 7px; background: #f8faf7; }
+.reader-toolbar .reader-mode-button { width: 32px; min-width: 32px; height: 32px; min-height: 32px; color: #7c897e; }
+.reader-toolbar .reader-mode-button[aria-pressed="true"] { background: #e6eee5; color: #285b49; }
+@media (max-width: 600px) {
+  .reader-toolbar.has-reading-mode { padding-inline: 8px; gap: 4px; }
+  .reader-toolbar-options { gap: 6px; }
+  .reader-toolbar .reader-mode-button { width: 27px; min-width: 27px; height: 38px; min-height: 38px; }
+  .reader-mode-controls { padding: 1px; gap: 1px; }
+  .has-reading-mode .reader-zoom-controls { gap: 2px; }
+}
+@media (max-width: 380px) {
+  .reader-toolbar.has-reading-mode { padding-inline: 6px; }
+  .has-reading-mode .reader-page-form label { display: none; }
+  .has-reading-mode .reader-page-form input { width: 36px; }
+  .has-reading-mode .reader-toolbar-options { gap: 4px; }
+}
