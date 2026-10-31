@@ -218,15 +218,30 @@ for (const mobile of [false, true]) {
         { scrollBy, leave, zoomBeforeLeaving },
       );
 
-    await expect(reader).toHaveAttribute('data-theme', 'light');
+    await expect(reader).toHaveAttribute('data-theme', 'white');
+    await expect(page.getByRole('radio', { name: 'White', exact: true })).toBeChecked();
+    await page.getByRole('radio', { name: 'White', exact: true }).click();
+    await expect(page.getByRole('radio', { name: 'White', exact: true })).toBeChecked();
     const beforeTheme = await readingPosition();
-    await page.getByRole('button', { name: 'Switch to dark mode', exact: true }).click();
+    await page.getByRole('radio', { name: 'Sepia', exact: true }).click();
+    await expect(reader).toHaveAttribute('data-theme', 'sepia');
     await expect(page.frameLocator('iframe').first().locator('body')).toHaveCSS(
       'background-color',
-      'rgb(24, 33, 28)',
+      'rgb(245, 243, 239)',
     );
     expect(await readingPosition()).toEqual(beforeTheme);
+    await page.getByRole('radio', { name: 'Black', exact: true }).click();
+    await expect(page.frameLocator('iframe').first().locator('body')).toHaveCSS(
+      'background-color',
+      'rgb(0, 0, 0)',
+    );
+    expect(await readingPosition()).toEqual(beforeTheme);
+    const rememberedThemes = ['black', 'sepia', 'white'] as const;
     for (let reopen = 0; reopen < 3; reopen += 1) {
+      if (reopen > 0)
+        await page
+          .getByRole('radio', { name: reopen === 1 ? 'Sepia' : 'White', exact: true })
+          .click();
       const before = await readingPosition();
       const saved = await readingPosition(reopen === 0 ? 213 : 97, true, reopen === 2);
       expect(saved.top).not.toBe(before.top);
@@ -238,10 +253,10 @@ for (const mobile of [false, true]) {
       await page.getByRole('button', { name: 'Open A little room to read.epub' }).click();
       await expect(viewport).toHaveAttribute('aria-busy', 'false', { timeout: 20000 });
       await expect(reader.locator('.epub-overlay')).toHaveCount(0);
-      await expect(reader).toHaveAttribute('data-theme', 'dark');
+      await expect(reader).toHaveAttribute('data-theme', rememberedThemes[reopen]);
       await expect(page.frameLocator('iframe').first().locator('p').first()).toHaveCSS(
         'color',
-        'rgb(220, 229, 220)',
+        rememberedThemes[reopen] === 'black' ? 'rgb(229, 229, 229)' : 'rgb(41, 39, 36)',
       );
       await expect
         .poll(
@@ -273,8 +288,11 @@ for (const mobile of [false, true]) {
     }
     if (mobile) await page.screenshot({ path: 'test-results/epub-mobile.png' });
     const beforeLight = await readingPosition();
-    await page.getByRole('button', { name: 'Switch to light mode', exact: true }).click();
-    await expect(reader).toHaveAttribute('data-theme', 'light');
+    await page.getByRole('radio', { name: 'Sepia', exact: true }).click();
+    await expect(reader).toHaveAttribute('data-theme', 'sepia');
+    expect(await readingPosition()).toEqual(beforeLight);
+    await page.getByRole('radio', { name: 'White', exact: true }).click();
+    await expect(reader).toHaveAttribute('data-theme', 'white');
     await expect(page.frameLocator('iframe').first().locator('body')).toHaveCSS(
       'background-color',
       'rgb(255, 255, 255)',
@@ -540,8 +558,8 @@ for (const mobile of [false, true]) {
     const horizontal = page.getByRole('button', { name: 'Horizontal scrolling', exact: true });
     const vertical = page.getByRole('button', { name: 'Vertical scrolling', exact: true });
     await expect(vertical).toHaveAttribute('aria-pressed', 'true');
-    await expect(reader).toHaveAttribute('data-theme', 'light');
-    await page.getByRole('button', { name: 'Switch to dark mode', exact: true }).click();
+    await expect(reader).toHaveAttribute('data-theme', 'white');
+    await page.getByRole('radio', { name: 'Black', exact: true }).click();
     await expect(horizontal).toBeEnabled();
     const total = await reader.locator('.reader-page-count').textContent();
     await horizontal.click();
@@ -550,7 +568,7 @@ for (const mobile of [false, true]) {
     await expect(horizontal).toBeEnabled({ timeout: 20000 });
     await expect(page.frameLocator('iframe').first().locator('body')).toHaveCSS(
       'background-color',
-      'rgb(24, 33, 28)',
+      'rgb(0, 0, 0)',
     );
     await expect(reader.locator('.epub-sheet')).toHaveCount(mobile ? 1 : 2);
     expect((await reader.locator('.epub-page').boundingBox())!.width).toBeGreaterThanOrEqual(
@@ -592,9 +610,9 @@ for (const mobile of [false, true]) {
             }
           }
         }
-        words.sort(
-          (a, b) => a.sheet - b.sheet || Math.round(a.y / 3) - Math.round(b.y / 3) || a.x - b.x,
-        );
+        // Preserve DOM order within each page. A hyphenated word's bounding box
+        // spans two lines, so sorting by its coordinates can scramble the text.
+        words.sort((a, b) => a.sheet - b.sheet);
         return {
           text: words.map((word) => word.word).join(' '),
           perSheet: papers.map((_, index) => words.filter((word) => word.sheet === index).length),

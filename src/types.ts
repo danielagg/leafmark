@@ -1,3 +1,5 @@
+export type EpubTheme = 'white' | 'sepia' | 'black';
+
 export type ReadingPosition =
   | { type: 'pdf'; page: number; offset: number; layout?: 'continuous' }
   | { type: 'epub'; cfi: string; href?: string; offset?: number; flow?: 'vertical' | 'horizontal' };

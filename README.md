@@ -68,7 +68,7 @@ For a local production build preview, run `npm run build` and `npm run preview`.
 - One shared toolbar for page navigation and zoom. The percentage appears only away from 100%.
 - A shared bottom progress bar with a highlighted percentage read in both formats.
 - Automatic resume using PDF page/offset or an EPUB content anchor. EPUB page numbers use stable text locations across the book.
-- EPUB light/dark toggle with light as the default and the choice remembered on each device. Bundled fonts, PWA manifest, and app icons.
+- EPUB White / Sepia / Black theme switch with White as the default and the choice remembered on each device. Bundled fonts, PWA manifest, and app icons.
 
 Accepts ordinary `.pdf` and `.epub` files. Password-protected PDFs, restricted Kindle downloads, and unusual fixed-layout EPUBs may be unsupported. Book scripts are disabled. Offline startup is not implemented.
 

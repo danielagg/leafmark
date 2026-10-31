@@ -21,7 +21,7 @@ The app is for one person. Source code or a portfolio page may be public, but bo
 - Show a simple file list using each file's original filename.
 - Open files, save reading position automatically, and resume across devices.
 - Include file deletion.
-- Default to a plain light-mode reader with only the controls needed to navigate and read the file. EPUBs also offer a simple dark/light toggle, remembered on each device.
+- Default to a plain light-mode reader with only the controls needed to navigate and read the file. EPUBs also offer a White / Sepia / Black theme switch, with White as the default and the choice remembered on each device.
 - Protect the library with one shared access code, remembered on each device. No signup or account-management interface.
 - Start with approximately 12–24 books, typically 5–10 MB each. Estimated original-file storage is 60–240 MB.
 - Prefer a simple architecture that can run on free tiers, including Vercel Hobby.

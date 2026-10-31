@@ -5,7 +5,7 @@ import { BookOpen, RotateCcw } from 'lucide-react';
 import loraFont from '@fontsource/lora/files/lora-latin-400-normal.woff2?url';
 import loraBoldFont from '@fontsource/lora/files/lora-latin-700-normal.woff2?url';
 import loraItalicFont from '@fontsource/lora/files/lora-latin-400-italic.woff2?url';
-import type { ReaderProps } from '../types';
+import type { EpubTheme, ReaderProps } from '../types';
 import ReaderToolbar from '../components/ReaderToolbar';
 import ReaderFooter from '../components/ReaderFooter';
 import { cn } from '@/lib/utils';
@@ -33,11 +33,10 @@ function bounded<T>(promise: PromiseLike<T>, milliseconds = 15000): Promise<T> {
 }
 const frame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 type ReadingMode = 'vertical' | 'horizontal';
-type ReadingTheme = 'light' | 'dark';
 const modePreference = 'leafmark-epub-reading-mode';
 const themePreference = 'leafmark-epub-theme';
 
-function applyTheme(doc: Document, theme: ReadingTheme) {
+function applyTheme(doc: Document, theme: EpubTheme) {
   doc.documentElement.dataset.leafmarkTheme = theme;
 }
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
@@ -66,13 +65,15 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
     return 'vertical';
   });
   const modeRef = useRef(mode);
-  const [theme, setTheme] = useState<ReadingTheme>(() => {
+  const [theme, setTheme] = useState<EpubTheme>(() => {
     try {
-      if (localStorage.getItem(themePreference) === 'dark') return 'dark';
+      const saved = localStorage.getItem(themePreference);
+      if (saved === 'white' || saved === 'sepia' || saved === 'black') return saved;
+      if (saved === 'dark') return 'black';
     } catch {
       /* Optional device preference. */
     }
-    return 'light';
+    return 'white';
   });
   const themeRef = useRef(theme);
   themeRef.current = theme;
@@ -999,7 +1000,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
       className={cn(
         'epub-reader flex size-full min-h-0 flex-1 flex-col overflow-hidden bg-[var(--epub-paper)] font-sans text-foreground',
         `epub-reader--${mode}`,
-        theme === 'dark' && 'dark',
+        theme === 'black' && 'dark',
       )}
       data-reading-mode={mode}
       data-theme={theme}

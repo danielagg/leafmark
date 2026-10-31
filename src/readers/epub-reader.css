@@ -1,16 +1,16 @@
 /* epub.js creates the scroll container and chapter iframes outside React. */
 .epub-reader {
   --epub-paper: #fff;
-}
-
-.epub-reader--horizontal {
-  --epub-paper: #f5f3ef;
   --reader-chrome: var(--epub-paper);
   --reader-footer: var(--epub-paper);
 }
 
-.epub-reader[data-theme='dark'] {
-  --epub-paper: #18211c;
+.epub-reader[data-theme='sepia'] {
+  --epub-paper: #f5f3ef;
+}
+
+.epub-reader[data-theme='black'] {
+  --epub-paper: #000;
   --reader-chrome: var(--card);
   --reader-footer: var(--card);
 }
@@ -27,6 +27,6 @@
   touch-action: pan-y;
 }
 
-.epub-reader[data-theme='dark'] .epub-container {
+.epub-reader[data-theme='black'] .epub-container {
   scrollbar-color: #526759 transparent;
 }

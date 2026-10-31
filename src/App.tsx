@@ -269,7 +269,7 @@ export default function App() {
     <>
       {activeBook ? (
         <main className="reader-shell flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground">
-          <header className="reader-header flex min-h-[72px] shrink-0 items-center gap-3.5 border-b bg-card px-6 py-3 max-[520px]:flex-wrap max-[520px]:gap-2.5 max-[520px]:px-3 max-[520px]:py-[9px]">
+          <header className="reader-header flex min-h-16 shrink-0 items-center gap-3.5 border-b bg-card px-6 py-2.5 max-[520px]:flex-wrap max-[520px]:gap-2.5 max-[520px]:px-3 max-[520px]:py-2">
             <Button
               variant="outline"
               size="icon"

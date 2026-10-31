@@ -18,7 +18,7 @@ export default function ReaderFooter({
   return (
     <footer
       className={cn(
-        'reader-footer relative flex w-full shrink-0 items-center justify-between gap-4 bg-[var(--reader-footer)] px-6 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))] text-[11px] leading-[normal] text-muted-foreground',
+        'reader-footer relative flex w-full shrink-0 items-center justify-between gap-4 bg-[var(--reader-footer)] px-6 pt-2 pb-[max(8px,env(safe-area-inset-bottom))] text-[11px] leading-[normal] text-muted-foreground',
         'max-[600px]:px-4 max-[600px]:text-[10px] [@media(max-height:500px)]:pt-1.5 [@media(max-height:500px)]:pb-[max(6px,env(safe-area-inset-bottom))]',
         className,
       )}
@@ -36,7 +36,7 @@ export default function ReaderFooter({
       >
         {label}
       </span>
-      <span className="reader-progress-value shrink-0 rounded-[5px] bg-secondary px-[9px] py-1 font-semibold text-primary tabular-nums">
+      <span className="reader-progress-value shrink-0 rounded-[5px] bg-secondary px-[9px] py-0.75 font-semibold text-primary tabular-nums">
         {percent}% read
       </span>
     </footer>

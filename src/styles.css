@@ -65,25 +65,25 @@
 
 /* The reader owns its theme; the library and unlock screen stay light. */
 .dark,
-.reader-shell:has(.epub-reader[data-theme='dark']) {
-  --background: #18211c;
-  --foreground: #dce5dc;
-  --card: #1c2820;
-  --card-foreground: #dce5dc;
+.reader-shell:has(.epub-reader[data-theme='black']) {
+  --background: #000;
+  --foreground: #e5e5e5;
+  --card: #111;
+  --card-foreground: #e5e5e5;
   --primary: #b9d5c3;
-  --primary-foreground: #18211c;
-  --secondary: #304336;
-  --secondary-foreground: #c4e0ce;
-  --muted: #1c2820;
-  --muted-foreground: #b6c7bb;
-  --accent: #304336;
+  --primary-foreground: #000;
+  --secondary: #242424;
+  --secondary-foreground: #e5e5e5;
+  --muted: #111;
+  --muted-foreground: #b6b6b6;
+  --accent: #242424;
   --accent-foreground: #b9d5c3;
-  --border: #36463b;
-  --input: #46564a;
+  --border: #333;
+  --input: #444;
   --ring: #a9cbb8;
-  --paper: #18211c;
-  --reader-chrome: #1c2820;
-  --reader-footer: #1c2820;
+  --paper: #000;
+  --reader-chrome: #111;
+  --reader-footer: #111;
   color-scheme: dark;
 }
 

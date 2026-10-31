@@ -26,8 +26,14 @@ a {
   color: #285b49;
 }
 
-html[data-leafmark-mode='horizontal'],
-html[data-leafmark-mode='horizontal'] body {
+html[data-leafmark-theme='white'],
+html[data-leafmark-theme='white'] body {
+  background: #fff !important;
+  color: #292724 !important;
+}
+
+html[data-leafmark-theme='sepia'],
+html[data-leafmark-theme='sepia'] body {
   background: #f5f3ef !important;
   color: #292724 !important;
 }
@@ -68,19 +74,19 @@ html[data-leafmark-mode='horizontal'] :is(pre, code, kbd, samp, math, svg) {
   hyphens: none;
 }
 
-html[data-leafmark-theme='dark'],
-html[data-leafmark-theme='dark'] body {
+html[data-leafmark-theme='black'],
+html[data-leafmark-theme='black'] body {
   color-scheme: dark;
-  color: #dce5dc !important;
-  background: #18211c !important;
+  color: #e5e5e5 !important;
+  background: #000 !important;
 }
 
-html[data-leafmark-theme='dark'] body * {
+html[data-leafmark-theme='black'] body * {
   color: inherit !important;
   background-color: transparent !important;
-  border-color: #46564a !important;
+  border-color: #444 !important;
 }
 
-html[data-leafmark-theme='dark'] :is(a, a *) {
+html[data-leafmark-theme='black'] :is(a, a *) {
   color: #a9cbb8 !important;
 }

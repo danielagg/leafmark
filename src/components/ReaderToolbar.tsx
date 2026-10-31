@@ -1,17 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import {
-  ArrowLeftRight,
-  ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
-  Minus,
-  Moon,
-  Plus,
-  Sun,
-} from 'lucide-react';
+import { ArrowLeftRight, ArrowUpDown, ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import ReaderThemeSwitch from '@/components/ReaderThemeSwitch';
+import type { EpubTheme } from '@/types';
 
 export interface ReaderToolbarProps {
   page: number;
@@ -24,8 +17,8 @@ export interface ReaderToolbarProps {
   onZoomChange: (zoom: number) => void;
   readingMode?: 'vertical' | 'horizontal';
   onReadingModeChange?: (mode: 'vertical' | 'horizontal') => void;
-  theme?: 'light' | 'dark';
-  onThemeChange?: (theme: 'light' | 'dark') => void;
+  theme?: EpubTheme;
+  onThemeChange?: (theme: EpubTheme) => void;
 }
 
 export default function ReaderToolbar({
@@ -85,7 +78,7 @@ export default function ReaderToolbar({
   return (
     <div
       className={cn(
-        'reader-toolbar flex min-h-[60px] w-full shrink-0 items-center justify-between gap-4 border-b bg-[var(--reader-chrome)] px-6 py-2 text-[13px] leading-[normal] text-primary',
+        'reader-toolbar flex min-h-14 w-full shrink-0 items-center justify-between gap-4 border-b bg-[var(--reader-chrome)] px-6 py-2 text-[13px] leading-[normal] text-primary',
         'max-[600px]:min-h-14 max-[600px]:gap-1.5 max-[600px]:px-2 max-[600px]:py-1.5 max-[340px]:gap-0.5 max-[340px]:px-1.5 max-[340px]:text-xs',
         readingMode && 'has-reading-mode max-[600px]:gap-1',
         theme && 'has-theme max-[600px]:flex-wrap max-[600px]:gap-y-0.5',
@@ -207,30 +200,10 @@ export default function ReaderToolbar({
           </div>
         )}
         {theme && onThemeChange && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className={cn(
-              controlClassName,
-              'reader-theme-button max-[600px]:w-8 max-[600px]:min-w-8',
-            )}
-            aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-            title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-            onClick={() => onThemeChange(theme === 'light' ? 'dark' : 'light')}
-          >
-            {theme === 'light' ? (
-              <Moon
-                size={17}
-                aria-hidden="true"
-              />
-            ) : (
-              <Sun
-                size={17}
-                aria-hidden="true"
-              />
-            )}
-          </Button>
+          <ReaderThemeSwitch
+            value={theme}
+            onValueChange={onThemeChange}
+          />
         )}
         <div className="reader-zoom-controls flex items-center gap-2.5 max-[600px]:gap-0.5">
           <Button
