@@ -168,16 +168,45 @@ test('private cloud library remembers sessions, resumes across devices, uploads 
         ?.reading_position,
     ).toEqual(saved);
 
-    const row = (await client.from('books').select('storage_path').eq('filename', pdfName).single())
+    const beforeRename = (await client.from('books').select('*').eq('filename', pdfName).single())
       .data!;
-    await desktop.getByRole('button', { name: `Delete ${pdfName}`, exact: true }).click();
+    const pdfTitle = `${prefix} renamed title`;
+    await desktop.getByRole('button', { name: `Rename ${pdfName}`, exact: true }).click();
+    const dialog = desktop.getByRole('dialog', { name: 'Rename book' });
+    await dialog.getByRole('textbox', { name: 'Title', exact: true }).fill(pdfTitle);
+    failProgress = true;
+    await dialog.getByRole('button', { name: 'Save title', exact: true }).click();
+    await expect(dialog.getByRole('alert')).toBeVisible();
+    await expect(dialog.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue(pdfTitle);
+    expect((await client.from('books').select('*').eq('filename', pdfName).single()).data).toEqual(
+      beforeRename,
+    );
+    failProgress = false;
+    await dialog.getByRole('button', { name: 'Save title', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(
+      desktop.getByRole('button', { name: `Open ${pdfTitle}`, exact: true }),
+    ).toBeVisible();
+    expect((await client.from('books').select('*').eq('filename', pdfName).single()).data).toEqual({
+      ...beforeRename,
+      title: pdfTitle,
+    });
+    await phone.reload();
+    await phone.getByRole('button', { name: `Open ${pdfTitle}`, exact: true }).click();
+    await expect(phone.getByRole('spinbutton')).toHaveValue('2');
+    await expect(phone.locator('.reader-heading')).toHaveText(pdfTitle);
+    await phone.getByRole('button', { name: 'Back to library' }).click();
+
+    await desktop.getByRole('button', { name: `Delete ${pdfTitle}`, exact: true }).click();
     await desktop.getByRole('button', { name: 'Remove book', exact: true }).click();
     await expect(desktop.getByRole('alertdialog')).toHaveCount(0);
-    await expect(desktop.getByRole('button', { name: `Open ${pdfName}`, exact: true })).toHaveCount(
-      0,
-    );
+    await expect(
+      desktop.getByRole('button', { name: `Open ${pdfTitle}`, exact: true }),
+    ).toHaveCount(0);
     expect((await client.from('books').select('id').eq('filename', pdfName)).data).toEqual([]);
-    expect((await client.storage.from('books').download(row.storage_path)).error).toBeTruthy();
+    expect(
+      (await client.storage.from('books').download(beforeRename.storage_path)).error,
+    ).toBeTruthy();
     await desktop.getByRole('button', { name: 'Lock library' }).click();
     await expect(desktop.getByLabel('Library code', { exact: true })).toBeVisible();
     await desktop.reload();

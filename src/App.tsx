@@ -1,6 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, LoaderCircle, X } from 'lucide-react';
 import Library from './components/Library';
+import RenameBookDialog from './components/RenameBookDialog';
+import { bookTitle } from './lib/book-title';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useLibraryAuth } from './components/AuthGate';
 import { isCloudMode } from './lib/supabase';
-import { addBook, deleteBook, listBooks, openBook, saveProgress } from './lib/storage';
+import { addBook, deleteBook, listBooks, openBook, renameBook, saveProgress } from './lib/storage';
 import type { Book, ReadableBook, ReadingPosition } from './types';
 
 const PdfReader = lazy(() => import('./readers/PdfReader'));
@@ -41,6 +43,7 @@ export default function App() {
   const [openingBook, setOpeningBook] = useState<string | null>(null);
   const openingLock = useRef(false);
   const [pendingDelete, setPendingDelete] = useState<Book | null>(null);
+  const [pendingRename, setPendingRename] = useState<Book | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error'>('saved');
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
@@ -73,7 +76,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    document.title = activeBook ? `${activeBook.filename} · Leafmark` : 'Leafmark · Your library';
+    document.title = activeBook ? `${bookTitle(activeBook)} · Leafmark` : 'Leafmark · Your library';
   }, [activeBook]);
 
   const uploadFiles = useCallback(async (files: File[]) => {
@@ -127,7 +130,7 @@ export default function App() {
   const handleOpen = useCallback(async (book: Book) => {
     if (openingLock.current) return;
     openingLock.current = true;
-    setOpeningBook(book.filename);
+    setOpeningBook(bookTitle(book));
     try {
       await saveQueue.current.catch(() => {});
       // A failed save from a previously closed reader must never replace a
@@ -240,6 +243,14 @@ export default function App() {
     };
   }, [activeBook, enqueueSave]);
 
+  const handleRename = async (title: string) => {
+    if (!pendingRename) throw new Error('Choose a book to rename.');
+    await renameBook(pendingRename.id, title);
+    setBooks((previous) =>
+      previous.map((book) => (book.id === pendingRename.id ? { ...book, title } : book)),
+    );
+  };
+
   const confirmDelete = async () => {
     if (!pendingDelete || busy) return;
     setBusy(true);
@@ -285,9 +296,9 @@ export default function App() {
             </Button>
             <div
               className="reader-heading min-w-0 flex-1 truncate text-sm font-medium max-[520px]:text-xs"
-              title={activeBook.filename}
+              title={bookTitle(activeBook)}
             >
-              {activeBook.filename}
+              {bookTitle(activeBook)}
             </div>
             <span
               className={cn(
@@ -344,6 +355,7 @@ export default function App() {
           onOpen={handleOpen}
           onUpload={uploadFiles}
           onDelete={setPendingDelete}
+          onRename={setPendingRename}
           onSamples={loadSamples}
           cloud={isCloudMode}
           onLock={authEnabled ? handleLock : undefined}
@@ -361,6 +373,14 @@ export default function App() {
           />
           <span className="min-w-0">Opening {openingBook}…</span>
         </div>
+      )}
+      {pendingRename && (
+        <RenameBookDialog
+          key={pendingRename.id}
+          book={pendingRename}
+          onSave={handleRename}
+          onClose={() => setPendingRename(null)}
+        />
       )}
       <AlertDialog
         open={!!pendingDelete}
@@ -380,7 +400,7 @@ export default function App() {
                 Remove this book?
               </AlertDialogTitle>
               <AlertDialogDescription className="text-[13px] leading-[1.8] [overflow-wrap:anywhere]">
-                <strong>{pendingDelete.filename}</strong> and its saved reading position will be
+                <strong>{bookTitle(pendingDelete)}</strong> and its saved reading position will be
                 removed from this library. Your original file stays untouched.
               </AlertDialogDescription>
             </AlertDialogHeader>

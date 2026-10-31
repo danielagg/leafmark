@@ -7,6 +7,7 @@ export type ReadingPosition =
 export interface Book {
   id: string;
   filename: string;
+  title?: string;
   format: 'pdf' | 'epub';
   bytes: number;
   createdAt: number;
@@ -31,6 +32,7 @@ export interface LibraryProps {
   onOpen: (book: Book) => void;
   onUpload: (files: File[]) => void;
   onDelete: (book: Book) => void;
+  onRename: (book: Book) => void;
   onSamples: () => void;
   busy: boolean;
   loading: boolean;

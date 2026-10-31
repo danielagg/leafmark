@@ -7,12 +7,14 @@ import {
   Leaf,
   LoaderCircle,
   LockKeyhole,
+  Pencil,
   Plus,
   Trash2,
   Upload,
 } from 'lucide-react';
 import type { Book, LibraryProps } from '@/types';
 import { cn } from '@/lib/utils';
+import { bookTitle } from '@/lib/book-title';
 import Brand from '@/components/Brand';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -33,6 +35,7 @@ export default function Library({
   onOpen,
   onUpload,
   onDelete,
+  onRename,
   onSamples,
   busy,
   loading,
@@ -44,7 +47,7 @@ export default function Library({
   const dragDepth = useRef(0);
   const [dragging, setDragging] = useState(false);
   const sorted = [...books].sort((a, b) =>
-    a.filename.localeCompare(b.filename, undefined, { sensitivity: 'base', numeric: true }),
+    bookTitle(a).localeCompare(bookTitle(b), undefined, { sensitivity: 'base', numeric: true }),
   );
   const recent = [...books]
     .filter((book) => book.lastReadAt !== null)
@@ -283,12 +286,12 @@ export default function Library({
                       {recent.format.toUpperCase()}
                     </span>
                     <h3 className="mt-2 mb-3.5 text-[17px] leading-[1.45] font-medium [overflow-wrap:anywhere] max-[520px]:text-sm">
-                      {recent.filename}
+                      {bookTitle(recent)}
                     </h3>
                     <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                       <Progress
                         value={percentage(recent)}
-                        aria-label={`Reading progress for ${recent.filename}`}
+                        aria-label={`Reading progress for ${bookTitle(recent)}`}
                         className="h-[3px] w-[132px] max-w-1/2"
                       />
                       <span>{percentage(recent)}% read</span>
@@ -336,7 +339,7 @@ export default function Library({
                         'max-[760px]:gap-3.5 max-[520px]:grid max-[520px]:grid-cols-[37px_minmax(0,1fr)] max-[520px]:gap-x-3 max-[520px]:gap-y-px max-[520px]:px-0 max-[520px]:py-[17px]',
                       )}
                       onClick={() => onOpen(book)}
-                      aria-label={`Open ${book.filename}`}
+                      aria-label={`Open ${bookTitle(book)}`}
                     >
                       <span
                         className={cn(
@@ -349,7 +352,7 @@ export default function Library({
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-[13px] leading-[1.6] font-medium [overflow-wrap:anywhere] max-[520px]:text-xs">
-                          {book.filename}
+                          {bookTitle(book)}
                         </span>
                         <span className="mt-[5px] block text-[11px] font-normal text-muted-foreground max-[520px]:mt-0.5 max-[520px]:text-[10px]">
                           {readableBytes(book.bytes)}
@@ -381,11 +384,26 @@ export default function Library({
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="shrink-0 text-[#8c9386] hover:text-primary"
+                      onClick={() => onRename(book)}
+                      disabled={busy}
+                      aria-label={`Rename ${bookTitle(book)}`}
+                      title={`Rename ${bookTitle(book)}`}
+                    >
+                      <Pencil
+                        size={16}
+                        strokeWidth={1.6}
+                        aria-hidden="true"
+                      />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="text-[#8c9386] hover:bg-[#f5e9e4] hover:text-destructive"
                       onClick={() => onDelete(book)}
                       disabled={busy}
-                      aria-label={`Delete ${book.filename}`}
-                      title={`Delete ${book.filename}`}
+                      aria-label={`Delete ${bookTitle(book)}`}
+                      title={`Delete ${bookTitle(book)}`}
                     >
                       <Trash2
                         size={17}

@@ -2,17 +2,19 @@ import { Upload } from 'tus-js-client';
 import type { Book, ReadableBook, ReadingPosition } from '../types';
 import { ownerId, supabase, supabaseUrl } from './supabase';
 import { validateFile } from './file-validation';
+import { validateTitle } from './book-title';
 
 const BUCKET = 'books';
 const CHUNK_BYTES = 6 * 1024 * 1024;
 const COLUMNS =
-  'id,owner_id,filename,format,storage_path,byte_size,reading_position,progress,last_read_at,created_at';
+  'id,owner_id,filename,title,format,storage_path,byte_size,reading_position,progress,last_read_at,created_at';
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type BookRow = {
   id: string;
   owner_id: string;
   filename: string;
+  title: string | null;
   format: 'pdf' | 'epub';
   storage_path: string;
   byte_size: number;
@@ -55,6 +57,7 @@ function metadata(row: BookRow): Book {
   return {
     id: row.id,
     filename: row.filename,
+    title: row.title ?? undefined,
     format: row.format,
     bytes: Number(row.byte_size),
     storagePath: row.storage_path,
@@ -331,6 +334,21 @@ export async function saveProgress(
     throw new Error(
       'Could not save reading progress because this book is no longer in your library.',
     );
+}
+
+export async function renameBook(id: string, value: string): Promise<void> {
+  checkId(id);
+  const title = validateTitle(value);
+  const client = await authenticated();
+  const { data, error } = await client
+    .from('books')
+    .update({ title })
+    .eq('id', id)
+    .eq('owner_id', ownerId)
+    .select('id')
+    .maybeSingle();
+  if (error) throw failure('Could not save the title', error);
+  if (!data) throw new Error('This book is no longer in your library.');
 }
 
 export async function deleteBook(id: string): Promise<void> {

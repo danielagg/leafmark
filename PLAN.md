@@ -18,7 +18,7 @@ The app is for one person. Source code or a portfolio page may be public, but bo
 - Provide an installable PWA that launches from its own app icon. Opening a browser window manually should not be part of daily use.
 - Require internet for the first release. Offline reading and offline synchronization are deferred.
 - Accept PDF and EPUB files through an in-app upload control.
-- Show a simple file list using each file's original filename.
+- Show a simple file list using each file's original filename by default, with an editable display title.
 - Open files, save reading position automatically, and resume across devices.
 - Include file deletion.
 - Default to a plain light-mode reader with only the controls needed to navigate and read the file. EPUBs also offer a White / Sepia / Black theme switch, with White as the default and the choice remembered on each device.
@@ -70,7 +70,7 @@ This keeps the direct-browser architecture and avoids a custom authentication ba
 
 ## File list and reading
 
-The library shows filenames and an upload control. Use a fixed alphabetical order and allow deletion with a simple confirmation. Show useful empty, loading, upload, and failure states.
+The library shows book titles and an upload control. Titles default to the original filename and can be edited with a pencil action. Preserve the original filename separately. Use a fixed alphabetical order by display title and allow deletion with a simple confirmation. Show useful empty, loading, upload, and failure states.
 
 Open a file in the appropriate reader. Provide a way back to the library. Start PDFs fitted to the available width, with continuous vertical scrolling, page jumps, and basic zoom. Render nearby pages while reserving stable space for the whole document. Let EPUB text reflow to the available screen. Offer vertical continuous scrolling and horizontal paged reading with two pages on wide screens or one on narrow screens. Horizontal reading uses a continuous paper background, generous page margins, larger responsive typography, and natural word and paragraph spacing. Wheel gestures move horizontally in horizontal mode; switching layouts retains the content location. Both formats share one toolbar for previous/next page, book-wide page input and total, and zoom out/in, plus a bottom reading-progress bar. Show the zoom percentage only away from 100%. EPUB page numbers use stable text locations; preserve the exact content locator for resume. Extra appearance settings are deferred.
 
@@ -104,9 +104,9 @@ The first release restores the latest position when a book is reopened. It does 
 
 ## Minimum data model
 
-| Table   | Fields                                                                                                                                  |
-| ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `books` | `id`, `owner_id`, `filename`, `format`, `storage_path`, `byte_size`, nullable `reading_position`, nullable `last_read_at`, `created_at` |
+| Table   | Fields                                                                                                                                                    |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `books` | `id`, `owner_id`, `filename`, nullable `title`, `format`, `storage_path`, `byte_size`, nullable `reading_position`, nullable `last_read_at`, `created_at` |
 
 Use `pdf` or `epub` for `format`. Store the format-specific locator as validated JSON in `reading_position`. Set progress timestamps on the server. Use unique storage paths even when two files have the same filename.
 

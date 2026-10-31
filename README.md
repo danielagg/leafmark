@@ -19,6 +19,8 @@ For a preview without a cloud account, run `npm run dev:local`. This development
 
 Both modes include **Try sample books**, a PDF and an EPUB you can remove afterward. Use **Add books** or drop files into the library for your own files. The development server binds to this computer's loopback address.
 
+Use the pencil beside a book to edit its display title. Titles sync with your cloud library; the original filename, file contents, and reading progress stay intact.
+
 ## Cloud setup
 
 The existing Supabase project is `wvcwmujpnhrpzjkmuhsw`. Setup uses its existing Free plan. No subscription, compute, or paid add-on settings are configured by this repo.

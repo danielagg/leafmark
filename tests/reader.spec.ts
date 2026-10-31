@@ -9,6 +9,87 @@ async function samples(page: import('@playwright/test').Page) {
   await expect(page.getByRole('button', { name: 'Open A little room to read.epub' })).toBeVisible();
 }
 
+for (const mobile of [false, true]) {
+  test(`${mobile ? 'mobile' : 'desktop'} book titles can be edited without changing files or progress`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(
+      mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 },
+    );
+    await samples(page);
+    await page.getByRole('button', { name: 'Open The art of noticing.pdf', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Next page', exact: true })).toBeEnabled();
+    await page.getByRole('button', { name: 'Next page', exact: true }).click();
+    await page.getByRole('button', { name: 'Back to library' }).click();
+
+    const stored = (filename: string) =>
+      page.evaluate(async (filename) => {
+        const db = await new Promise<IDBDatabase>((resolve) => {
+          const request = indexedDB.open('leafmark-library', 1);
+          request.onsuccess = () => resolve(request.result);
+        });
+        const books = await new Promise<Array<Record<string, unknown>>>((resolve) => {
+          const request = db.transaction('books').objectStore('books').getAll();
+          request.onsuccess = () => resolve(request.result);
+        });
+        db.close();
+        const { file, ...metadata } = books.find((book) => book.filename === filename)!;
+        return { ...metadata, fileBytes: (file as Blob).size };
+      }, filename);
+
+    for (const [filename, title] of [
+      ['The art of noticing.pdf', 'Noticing & a little café'],
+      ['A little room to read.epub', 'A little room'],
+    ]) {
+      const before = await stored(filename);
+      const rename = page.getByRole('button', { name: `Rename ${filename}`, exact: true });
+      await rename.click();
+      const dialog = page.getByRole('dialog', { name: 'Rename book' });
+      const input = dialog.getByRole('textbox', { name: 'Title', exact: true });
+      await expect(input).toHaveValue(filename);
+      await expect(input).toBeFocused();
+      await input.fill('Discard this draft');
+      await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+      await expect(dialog).toHaveCount(0);
+      await expect(rename).toBeFocused();
+      expect(await stored(filename)).toEqual(before);
+
+      await rename.click();
+      await input.fill('   ');
+      await expect(dialog.getByRole('button', { name: 'Save title', exact: true })).toBeDisabled();
+      await input.fill(`  ${title}  `);
+      if (mobile)
+        await page.screenshot({
+          path: 'test-results/rename-book-mobile.png',
+          animations: 'disabled',
+        });
+      await input.press('Enter');
+      await expect(dialog).toHaveCount(0);
+      await expect(page.getByRole('button', { name: `Open ${title}`, exact: true })).toBeVisible();
+      expect(await stored(filename)).toEqual({ ...before, title });
+      await page.reload();
+      await page.getByRole('button', { name: `Open ${title}`, exact: true }).click();
+      await expect(page.locator('.reader-heading')).toHaveText(title);
+      await expect(page).toHaveTitle(`${title} · Leafmark`);
+      if (filename.endsWith('.pdf')) {
+        await expect(page.getByRole('spinbutton')).toHaveValue('2');
+        await expect(page.locator('.pdf-page[data-page-number="2"] canvas')).toBeVisible();
+      } else {
+        await expect(page.locator('.epub-viewport')).toHaveAttribute('aria-busy', 'false');
+        await expect(page.frameLocator('iframe').first().getByRole('heading')).toBeVisible();
+      }
+      await page.getByRole('button', { name: 'Back to library' }).click();
+      await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
+      await page.getByRole('button', { name: `Delete ${title}`, exact: true }).click();
+      await expect(page.getByRole('alertdialog')).toContainText(title);
+      await page.getByRole('button', { name: 'Keep book', exact: true }).click();
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  });
+}
+
 test('PDF renders, navigation persists after reload, deletion is real', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));

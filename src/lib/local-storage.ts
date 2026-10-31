@@ -1,6 +1,7 @@
 import { openDB, type DBSchema } from 'idb';
 import type { Book, ReadableBook, ReadingPosition } from '../types';
 import { validateFile } from './file-validation';
+import { validateTitle } from './book-title';
 
 interface LibraryDatabase extends DBSchema {
   books: { key: string; value: Book };
@@ -72,4 +73,14 @@ export async function saveProgress(
 
 export async function deleteBook(id: string): Promise<void> {
   await (await database()).delete('books', id);
+}
+
+export async function renameBook(id: string, value: string): Promise<void> {
+  const title = validateTitle(value);
+  const db = await database();
+  const tx = db.transaction('books', 'readwrite');
+  const book = await tx.store.get(id);
+  if (book) await tx.store.put({ ...book, title });
+  await tx.done;
+  if (!book) throw new Error('This book is no longer in your library.');
 }
