@@ -360,7 +360,7 @@ for (const mobile of [false, true]) {
 }
 
 for (const mobile of [false, true]) {
-  test(`${mobile ? 'mobile' : 'desktop'} EPUB switches scroll directions, shows bordered pages, and restores horizontal reading`, async ({ page }) => {
+  test(`${mobile ? 'mobile' : 'desktop'} EPUB switches scroll directions, lays out book spreads, and restores horizontal reading`, async ({ page }) => {
     await page.setViewportSize(mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 });
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -383,8 +383,8 @@ for (const mobile of [false, true]) {
     expect((await reader.locator('.epub-page').boundingBox())!.width).toBeGreaterThanOrEqual(page.viewportSize()!.width * .95);
     await expect(reader.locator('.reader-page-count')).toHaveText(total!);
 
-    // Count real laid-out text inside each bordered sheet, rather than accepting
-    // decorative empty page frames as a two-page reader.
+    // Count real laid-out text in each page area, rather than accepting empty
+    // columns as a two-page reader.
     const visibleWords = () => reader.evaluate(element => {
       const papers = Array.from(element.querySelectorAll<HTMLElement>('.epub-sheet')).map(sheet => sheet.getBoundingClientRect());
       const words: Array<{ word: string; x: number; y: number; sheet: number }> = [];
@@ -411,6 +411,13 @@ for (const mobile of [false, true]) {
       return { text: words.map(word => word.word).join(' '), perSheet: papers.map((_, index) => words.filter(word => word.sheet === index).length) };
     });
     await expect.poll(async () => (await visibleWords()).perSheet.every(count => count > 15)).toBe(true);
+    const fontSize = () => page.frameLocator('iframe').first().locator('body').evaluate(element => parseFloat(getComputedStyle(element).fontSize));
+    const normalSize = await fontSize();
+    await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+    await expect.poll(fontSize).toBeGreaterThan(normalSize);
+    await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
+    await expect.poll(fontSize).toBe(normalSize);
+    await expect(horizontal).toBeEnabled();
     const initial = (await visibleWords()).text;
     const viewport = reader.locator('.epub-viewport');
     const bounds = (await viewport.boundingBox())!;

@@ -64,7 +64,7 @@ For a local production build preview, run `npm run build` and `npm run preview`.
 
 - Filename library, upload, deletion, continue-reading shortcut, and progress indicators.
 - Continuous PDF scrolling with page jumps and zoom. Only nearby pages render to limit memory use.
-- EPUB vertical continuous scrolling or horizontal bordered pages that use the available screen width, two on wide screens and one on narrow screens. Supports wheel, trackpad, touch, and keyboard navigation.
+- EPUB vertical continuous scrolling or horizontal book spreads, two pages on wide screens and one on narrow screens. Horizontal mode uses a continuous paper background, generous margins, larger responsive type, and natural paragraph spacing. Supports wheel, trackpad, touch, and keyboard navigation.
 - One shared toolbar for page navigation and zoom. The percentage appears only away from 100%.
 - A shared bottom progress bar with a highlighted percentage read in both formats.
 - Automatic resume using PDF page/offset or an EPUB content anchor. EPUB page numbers use stable text locations across the book.

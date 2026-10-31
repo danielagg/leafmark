@@ -82,24 +82,24 @@
   .epub-error button { transition: none; }
 }
 
-.epub-reader--horizontal { background: var(--epub-surround); }
-.epub-reader--horizontal .epub-page { width: 100%; background: var(--epub-surround); }
-.epub-reader--horizontal .epub-viewport { inset: 16px; }
+.epub-reader--horizontal { --epub-paper: #f5f3ef; --epub-surround: var(--epub-paper); background: var(--epub-paper); }
+.epub-reader--horizontal .epub-page { width: 100%; max-width: 2200px; background: var(--epub-surround); }
+.epub-reader--horizontal .epub-viewport { inset: clamp(20px, 3vh, 36px) clamp(16px, 2vw, 48px); }
 .epub-reader--horizontal .epub-container { overscroll-behavior: contain; touch-action: pan-y; }
-.epub-paper-frames { position: absolute; inset: 16px; pointer-events: none; z-index: 1; }
+.epub-paper-frames { position: absolute; inset: clamp(20px, 3vh, 36px) clamp(16px, 2vw, 48px); pointer-events: none; z-index: 1; }
 .epub-paper-frame {
   position: absolute;
-  top: 8px;
-  bottom: 8px;
-  border: 1px solid var(--epub-border);
-  box-shadow: 0 0 0 8px var(--epub-surround), inset 0 0 0 1px var(--epub-paper);
+  top: 0;
+  bottom: 0;
 }
 .epub-reader--horizontal .epub-overlay { z-index: 2; }
 @media (max-width: 600px) {
-  .epub-reader--horizontal .epub-viewport, .epub-paper-frames { inset: 8px; }
+  .epub-reader--horizontal .epub-viewport, .epub-paper-frames { inset: 12px 0; }
 }
+.epub-reader--horizontal .reader-toolbar, .epub-reader--horizontal .reader-footer { background: var(--epub-paper); }
 
 .epub-reader[data-theme="dark"] { --epub-paper: #18211c; --epub-surround: #101813; --epub-border: #46564a; --epub-pine: #a9cbb8; color: #dce5dc; color-scheme: dark; }
+.epub-reader--horizontal[data-theme="dark"] { --epub-surround: var(--epub-paper); }
 .epub-reader[data-theme="dark"] .reader-toolbar, .epub-reader[data-theme="dark"] .reader-footer { background: #1c2820; color: #b6c7bb; border-color: #36463b; }
 .epub-reader[data-theme="dark"] .reader-control-button { color: #b9d5c3; }
 .epub-reader[data-theme="dark"] .reader-control-button:hover:not(:disabled) { background: #304336; }

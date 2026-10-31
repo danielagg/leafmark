@@ -3,6 +3,8 @@ import ePub from 'epubjs';
 import type { Book as EpubBook, Contents, Location, NavItem, Rendition } from 'epubjs';
 import { BookOpen, RotateCcw } from 'lucide-react';
 import loraFont from '@fontsource/lora/files/lora-latin-400-normal.woff2?url';
+import loraBoldFont from '@fontsource/lora/files/lora-latin-700-normal.woff2?url';
+import loraItalicFont from '@fontsource/lora/files/lora-latin-400-italic.woff2?url';
 import type { ReaderProps } from '../types';
 import ReaderToolbar from '../components/ReaderToolbar';
 import ReaderFooter from '../components/ReaderFooter';
@@ -31,7 +33,8 @@ function applyTheme(doc: Document, theme: ReadingTheme) {
     html, body { color-scheme: dark; color: #dce5dc !important; background: #18211c !important; }
     body * { color: inherit !important; background-color: transparent !important; border-color: #46564a !important; }
     a, a * { color: #a9cbb8 !important; }
-  ` : 'html { color-scheme: light; }';
+  ` : `html { color-scheme: light; }
+    html[data-leafmark-mode="horizontal"], html[data-leafmark-mode="horizontal"] body { background: #f5f3ef !important; color: #292724 !important; }`;
 }
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
 function flatten(items: NavItem[]): NavItem[] {
@@ -113,6 +116,11 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
     let spineCount = 1;
     let toc: NavItem[] = [];
     const documents = new Map<Document, { cleanup: () => void; ready: Promise<unknown>; contents: Contents }>();
+    const textSize = () => (currentMode === 'vertical' ? 18 : host.clientWidth >= 1500 ? 23 : host.clientWidth >= 1100 ? 22 : host.clientWidth >= 600 ? 21 : 19) * currentZoom;
+    function applyTextSize(doc: Document) {
+      doc.documentElement.style.setProperty('font-size', `${textSize()}px`, 'important');
+      doc.body.style.setProperty('font-size', `${textSize()}px`, 'important');
+    }
     setLoading(true);
     setError('');
     setChapter('');
@@ -393,8 +401,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
         currentZoom = Math.max(.6, Math.min(2, next));
         setZoom(currentZoom);
         documents.forEach(({ contents }) => {
-          contents.document.documentElement.style.setProperty('font-size', `${18 * currentZoom}px`, 'important');
-          contents.document.body.style.setProperty('font-size', `${18 * currentZoom}px`, 'important');
+          applyTextSize(contents.document);
           contents.emit('expand');
         });
         await frame();
@@ -432,10 +439,22 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
     function attachContents(contents: Contents) {
       if (cancelled) return;
       const doc = contents.document;
+      doc.documentElement.dataset.leafmarkMode = currentMode;
+      if (!doc.documentElement.lang && publication?.packaging.metadata.language) doc.documentElement.lang = publication.packaging.metadata.language;
       const style = doc.createElement('style');
       style.textContent = `@font-face { font-family: LeafmarkLora; src: url("${new URL(loraFont, window.location.href).href}") format("woff2"); font-weight: 400; font-display: swap; }
-        html { background: white; font-size: ${18 * currentZoom}px !important; } body { font-family: LeafmarkLora, Lora, Georgia, serif; font-size: ${18 * currentZoom}px !important; line-height: 1.85; color: #26362e; background: white; padding-top: 20px !important; padding-bottom: ${currentMode === 'horizontal' ? 20 : 36}px !important; }
-        img, svg, video { max-width: 100%; height: auto; } a { color: #285b49; }`;
+        @font-face { font-family: LeafmarkLora; src: url("${new URL(loraBoldFont, window.location.href).href}") format("woff2"); font-weight: 700; font-display: swap; }
+        @font-face { font-family: LeafmarkLora; src: url("${new URL(loraItalicFont, window.location.href).href}") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+        html { background: white; font-size: ${textSize()}px !important; } body { font-family: LeafmarkLora, Lora, Georgia, serif; font-size: ${textSize()}px !important; line-height: 1.85; color: #26362e; background: white; padding-top: ${currentMode === 'horizontal' ? 24 : 20}px !important; padding-bottom: ${currentMode === 'horizontal' ? 24 : 36}px !important; }
+        img, svg, video { max-width: 100%; height: auto; } a { color: #285b49; }
+        ${currentMode === 'horizontal' ? `
+          body { line-height: 1.55 !important; }
+          p { line-height: 1.55 !important; margin-block: 0 .85em !important; letter-spacing: normal !important; word-spacing: normal !important; orphans: 2; widows: 2; }
+          p:not([align]):not([style*="text-align"]):not(.Centre):not(.Center):not(.center):not(.RightAlign) { text-align: start !important; hyphens: auto; -webkit-hyphens: auto; }
+          li, blockquote { line-height: 1.55 !important; }
+          h1, h2, h3 { line-height: 1.2 !important; text-wrap: balance; }
+          pre, code, kbd, samp, math, svg { hyphens: none; }
+        ` : ''}`;
       doc.head.append(style);
       applyTheme(doc, themeRef.current);
       contents.window.frameElement?.setAttribute('title', 'EPUB chapter');
@@ -457,7 +476,11 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
       doc.addEventListener('click', click, true);
       // EPUB's content hook runs asynchronously. Explicitly await its font work
       // before restoring, then expand the view to the final typeset height.
-      const ready = bounded(doc.fonts.load('18px LeafmarkLora'), 4000).catch(() => {}).then(async () => {
+      const ready = bounded(Promise.all([
+        doc.fonts.load(`${textSize()}px LeafmarkLora`),
+        doc.fonts.load(`700 ${textSize()}px LeafmarkLora`),
+        doc.fonts.load(`italic ${textSize()}px LeafmarkLora`),
+      ]), 4000).catch(() => {}).then(async () => {
         if (cancelled || !doc.defaultView?.frameElement?.isConnected) return;
         await frame();
         contents.emit('expand');
@@ -472,8 +495,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
         width: host!.clientWidth, height: host!.clientHeight,
         manager: currentMode === 'vertical' ? 'continuous' : 'default',
         flow: currentMode === 'vertical' ? 'scrolled' : 'paginated',
-        spread: currentMode === 'vertical' ? 'none' : 'auto', minSpreadWidth: 900,
-        gap: currentMode === 'horizontal' ? 64 : undefined,
+        spread: currentMode === 'vertical' ? 'none' : 'auto', minSpreadWidth: 1100,
         allowScriptedContent: false, resizeOnOrientationChange: false,
       };
       rendition = publication!.renderTo(host!, options);
@@ -652,6 +674,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
             navigating = true;
             void (async () => {
               try {
+                documents.forEach(({ contents }) => { applyTextSize(contents.document); contents.emit('expand'); });
                 rendition!.resize(width, height);
                 await frame(); await frame();
                 if (cancelled || !rendition || !cfi) return;
