@@ -12,3 +12,5 @@ export const openBook = storage.openBook;
 export const saveProgress = storage.saveProgress;
 export const deleteBook = storage.deleteBook;
 export const renameBook = storage.renameBook;
+export const getBookFile = storage.getBookFile;
+export const saveThumbnail = storage.saveThumbnail;

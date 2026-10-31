@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import path from 'node:path';
+import { readFile } from 'node:fs/promises';
+import JSZip from 'jszip';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 
 async function samples(page: import('@playwright/test').Page) {
@@ -8,6 +10,139 @@ async function samples(page: import('@playwright/test').Page) {
   await expect(page.getByRole('button', { name: 'Open The art of noticing.pdf' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open A little room to read.epub' })).toBeVisible();
 }
+
+test('library previews show PDF pages and EPUB 2/3 covers, persist, and backfill without marking books read', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await samples(page);
+  const pdf = page.getByRole('button', { name: 'Open The art of noticing.pdf', exact: true });
+  await expect(pdf.locator('img')).toBeVisible();
+  expect(
+    await pdf.locator('img').evaluate((image: HTMLImageElement) => ({
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+    })),
+  ).toEqual({ width: 159, height: 224 });
+  const uncovered = page.getByRole('button', {
+    name: 'Open A little room to read.epub',
+    exact: true,
+  });
+  await expect(uncovered.locator('.book-cover')).toHaveText('EPUB');
+  await expect(uncovered.locator('img')).toHaveCount(0);
+  for (const version of [2, 3]) {
+    const zip = await JSZip.loadAsync(await readFile('public/samples/A little room to read.epub'));
+    const opf = await zip.file('OEBPS/content.opf')!.async('string');
+    zip.file(
+      'OEBPS/content.opf',
+      opf
+        .replace(
+          '<manifest>',
+          `<manifest><item id="cover" href="images/cover%20art.svg" media-type="image/svg+xml"${version === 3 ? ' properties="cover-image other-property"' : ''}/>`,
+        )
+        .replace(
+          '</metadata>',
+          `${version === 2 ? '<meta name="cover" content="cover"/>' : ''}</metadata>`,
+        ),
+    );
+    zip.file(
+      'OEBPS/images/cover art.svg',
+      '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="200" height="300" fill="#22533e"/><text x="20" y="55" fill="white" font-size="20">A little room</text></svg>',
+    );
+    const name = `Embedded cover ${version}.epub`;
+    await page.getByLabel('Choose PDF or EPUB books').setInputFiles({
+      name,
+      mimeType: 'application/epub+zip',
+      buffer: await zip.generateAsync({ type: 'nodebuffer' }),
+    });
+    const image = page.getByRole('button', { name: `Open ${name}`, exact: true }).locator('img');
+    await expect(image).toBeVisible();
+    const color = await image.evaluate(async (image: HTMLImageElement) => {
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      const context = canvas.getContext('2d')!;
+      context.drawImage(image, -20, -100);
+      return Array.from(context.getImageData(0, 0, 1, 1).data);
+    });
+    expect(color[1]).toBeGreaterThan(color[0] + 20);
+  }
+
+  await pdf.click();
+  await expect(page.getByRole('button', { name: 'Next page', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Next page', exact: true }).click();
+  await page.getByRole('button', { name: 'Back to library' }).click();
+  await expect(page.locator('[aria-labelledby="continue-title"] img')).toBeVisible();
+  const before = await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve) => {
+      const request = indexedDB.open('leafmark-library', 1);
+      request.onsuccess = () => resolve(request.result);
+    });
+    return await new Promise<unknown[]>((resolve) => {
+      const tx = db.transaction('books', 'readwrite');
+      const request = tx.objectStore('books').getAll();
+      let snapshot: unknown[];
+      request.onsuccess = () => {
+        snapshot = request.result.map((book) => {
+          delete book.thumbnail;
+          tx.objectStore('books').put(book);
+          const { file: _file, ...metadata } = book;
+          return metadata;
+        });
+      };
+      tx.oncomplete = () => {
+        db.close();
+        resolve(snapshot);
+      };
+    });
+  });
+  await page.reload();
+  await expect(page.locator('[aria-labelledby="continue-title"] img')).toBeVisible();
+  for (const cover of await page.locator('.book-cover').all()) {
+    await cover.scrollIntoViewIfNeeded();
+  }
+  await pdf.scrollIntoViewIfNeeded();
+  await expect(pdf.locator('img')).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const db = await new Promise<IDBDatabase>((resolve) => {
+          const request = indexedDB.open('leafmark-library', 1);
+          request.onsuccess = () => resolve(request.result);
+        });
+        return await new Promise<unknown>((resolve) => {
+          const request = db.transaction('books').objectStore('books').getAll();
+          request.onsuccess = () => {
+            const books = request.result;
+            db.close();
+            resolve(
+              books.every((book) => book.thumbnail !== undefined)
+                ? books.map(({ thumbnail: _thumbnail, file: _file, ...metadata }) => metadata)
+                : null,
+            );
+          };
+        });
+      }),
+    )
+    .toEqual(before);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({
+    path: 'test-results/library-previews-mobile.png',
+    animations: 'disabled',
+  });
+  await page.getByLabel('Choose PDF or EPUB books').setInputFiles({
+    name: 'No usable preview.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.7\nNot a renderable document'),
+  });
+  const damaged = page.getByRole('button', { name: 'Open No usable preview.pdf', exact: true });
+  await expect(damaged.locator('.book-cover')).toHaveText('PDF');
+  await expect(damaged.locator('img')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});
 
 for (const mobile of [false, true]) {
   test(`${mobile ? 'mobile' : 'desktop'} book titles can be edited without changing files or progress`, async ({

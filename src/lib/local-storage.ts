@@ -2,6 +2,7 @@ import { openDB, type DBSchema } from 'idb';
 import type { Book, ReadableBook, ReadingPosition } from '../types';
 import { validateFile } from './file-validation';
 import { validateTitle } from './book-title';
+import { generateThumbnail } from './generate-thumbnail';
 
 interface LibraryDatabase extends DBSchema {
   books: { key: string; value: Book };
@@ -27,6 +28,7 @@ export async function addBook(
   const book: Book = {
     id: crypto.randomUUID(),
     filename: file.name,
+    thumbnail: await generateThumbnail(file, format),
     format,
     bytes: file.size,
     createdAt: Date.now(),
@@ -83,4 +85,17 @@ export async function renameBook(id: string, value: string): Promise<void> {
   if (book) await tx.store.put({ ...book, title });
   await tx.done;
   if (!book) throw new Error('This book is no longer in your library.');
+}
+
+export async function getBookFile(book: Book): Promise<Blob> {
+  if (!book.file) throw new Error('This book has no local file.');
+  return book.file;
+}
+
+export async function saveThumbnail(id: string, thumbnail: string): Promise<void> {
+  const db = await database();
+  const tx = db.transaction('books', 'readwrite');
+  const book = await tx.store.get(id);
+  if (book) await tx.store.put({ ...book, thumbnail });
+  await tx.done;
 }

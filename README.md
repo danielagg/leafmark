@@ -21,6 +21,8 @@ Both modes include **Try sample books**, a PDF and an EPUB you can remove afterw
 
 Use the pencil beside a book to edit its display title. Titles sync with your cloud library; the original filename, file contents, and reading progress stay intact.
 
+The library shows first-page previews for PDFs and embedded cover images for EPUBs, with format icons when no preview is available. Small previews are saved privately with the library. Older books get previews as they come into view without changing their reading history.
+
 ## Cloud setup
 
 The existing Supabase project is `wvcwmujpnhrpzjkmuhsw`. Setup uses its existing Free plan. No subscription, compute, or paid add-on settings are configured by this repo.

@@ -3,11 +3,12 @@ import type { Book, ReadableBook, ReadingPosition } from '../types';
 import { ownerId, supabase, supabaseUrl } from './supabase';
 import { validateFile } from './file-validation';
 import { validateTitle } from './book-title';
+import { generateThumbnail } from './generate-thumbnail';
 
 const BUCKET = 'books';
 const CHUNK_BYTES = 6 * 1024 * 1024;
 const COLUMNS =
-  'id,owner_id,filename,title,format,storage_path,byte_size,reading_position,progress,last_read_at,created_at';
+  'id,owner_id,filename,title,thumbnail,format,storage_path,byte_size,reading_position,progress,last_read_at,created_at';
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type BookRow = {
@@ -15,6 +16,7 @@ type BookRow = {
   owner_id: string;
   filename: string;
   title: string | null;
+  thumbnail: string | null;
   format: 'pdf' | 'epub';
   storage_path: string;
   byte_size: number;
@@ -58,6 +60,7 @@ function metadata(row: BookRow): Book {
     id: row.id,
     filename: row.filename,
     title: row.title ?? undefined,
+    thumbnail: row.thumbnail ?? undefined,
     format: row.format,
     bytes: Number(row.byte_size),
     storagePath: row.storage_path,
@@ -258,6 +261,7 @@ export async function addBook(
         id,
         owner_id: ownerId,
         filename: file.name,
+        thumbnail: await generateThumbnail(body, format),
         format,
         storage_path: path,
         byte_size: file.size,
@@ -349,6 +353,27 @@ export async function renameBook(id: string, value: string): Promise<void> {
     .maybeSingle();
   if (error) throw failure('Could not save the title', error);
   if (!data) throw new Error('This book is no longer in your library.');
+}
+
+export async function getBookFile(book: Book): Promise<Blob> {
+  checkId(book.id);
+  if (book.storagePath !== `${ownerId}/${book.id}.${book.format}`)
+    throw new Error('Invalid book storage location.');
+  const client = await authenticated();
+  const { data, error } = await client.storage.from(BUCKET).download(book.storagePath);
+  if (error) throw failure('Could not load the book preview', error);
+  return data;
+}
+
+export async function saveThumbnail(id: string, thumbnail: string): Promise<void> {
+  checkId(id);
+  const client = await authenticated();
+  const { error } = await client
+    .from('books')
+    .update({ thumbnail })
+    .eq('id', id)
+    .eq('owner_id', ownerId);
+  if (error) throw failure('Could not save the book preview', error);
 }
 
 export async function deleteBook(id: string): Promise<void> {

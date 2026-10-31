@@ -67,6 +67,9 @@ test('private cloud library remembers sessions, resumes across devices, uploads 
     );
     expect(tusRequests).toContain('POST');
     expect(tusRequests).toContain('PATCH');
+    await expect(
+      desktop.getByRole('button', { name: `Open ${pdfName}`, exact: true }).locator('img'),
+    ).toBeVisible();
     await desktop.getByRole('button', { name: `Open ${pdfName}`, exact: true }).click();
     await expect(desktop.locator('.pdf-page[data-page-number="1"] canvas')).toBeVisible({
       timeout: 20_000,
@@ -81,7 +84,15 @@ test('private cloud library remembers sessions, resumes across devices, uploads 
       )
       .toBe(2);
 
+    const previewDownloads: string[] = [];
+    phone.on('request', (request) => {
+      if (request.url().includes('/storage/v1/object/')) previewDownloads.push(request.url());
+    });
     await unlock(phone);
+    await expect(
+      phone.getByRole('button', { name: `Open ${pdfName}`, exact: true }).locator('img'),
+    ).toBeVisible();
+    expect(previewDownloads).toEqual([]);
     await phone.getByRole('button', { name: `Open ${pdfName}`, exact: true }).click();
     await expect(phone.getByRole('spinbutton')).toHaveValue('2', { timeout: 20_000 });
     await phone.getByRole('button', { name: 'Next page', exact: true }).click();

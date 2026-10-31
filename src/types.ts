@@ -8,6 +8,7 @@ export interface Book {
   id: string;
   filename: string;
   title?: string;
+  thumbnail?: string;
   format: 'pdf' | 'epub';
   bytes: number;
   createdAt: number;

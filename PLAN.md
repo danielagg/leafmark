@@ -21,6 +21,7 @@ The app is for one person. Source code or a portfolio page may be public, but bo
 - Show a simple file list using each file's original filename by default, with an editable display title.
 - Open files, save reading position automatically, and resume across devices.
 - Include file deletion.
+- Show PDF first-page thumbnails and embedded EPUB covers in the library, with format icons as a fallback. Save small previews privately and generate missing previews for existing books without marking them read.
 - Default to a plain light-mode reader with only the controls needed to navigate and read the file. EPUBs also offer a White / Sepia / Black theme switch, with White as the default and the choice remembered on each device.
 - Protect the library with one shared access code, remembered on each device. No signup or account-management interface.
 - Start with approximately 12–24 books, typically 5–10 MB each. Estimated original-file storage is 60–240 MB.
@@ -104,9 +105,9 @@ The first release restores the latest position when a book is reopened. It does 
 
 ## Minimum data model
 
-| Table   | Fields                                                                                                                                                    |
-| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `books` | `id`, `owner_id`, `filename`, nullable `title`, `format`, `storage_path`, `byte_size`, nullable `reading_position`, nullable `last_read_at`, `created_at` |
+| Table   | Fields                                                                                                                                                                          |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `books` | `id`, `owner_id`, `filename`, nullable `title`, nullable `thumbnail`, `format`, `storage_path`, `byte_size`, nullable `reading_position`, nullable `last_read_at`, `created_at` |
 
 Use `pdf` or `epub` for `format`. Store the format-specific locator as validated JSON in `reading_position`. Set progress timestamps on the server. Use unique storage paths even when two files have the same filename.
 

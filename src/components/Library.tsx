@@ -16,6 +16,7 @@ import type { Book, LibraryProps } from '@/types';
 import { cn } from '@/lib/utils';
 import { bookTitle } from '@/lib/book-title';
 import Brand from '@/components/Brand';
+import BookCover from '@/components/BookCover';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -272,15 +273,10 @@ export default function Library({
                     'max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:p-[22px] max-[520px]:gap-[13px] max-[520px]:p-[18px]',
                   )}
                 >
-                  <div
-                    className="grid min-h-[82px] w-[67px] shrink-0 place-items-center self-stretch rounded-[5px] border-[#d4decd] bg-[#e6ecdf] text-[#56765a] max-[760px]:min-h-[76px] max-[760px]:w-[55px] max-[520px]:w-[43px]"
-                    aria-hidden="true"
-                  >
-                    <BookOpen
-                      size={29}
-                      strokeWidth={1.35}
-                    />
-                  </div>
+                  <BookCover
+                    book={recent}
+                    large
+                  />
                   <div className="min-w-0 flex-1 max-[760px]:basis-[calc(100%-80px)] max-[520px]:basis-[calc(100%-62px)]">
                     <span className="text-[9px] font-semibold tracking-[1.4px] text-[#77836e]">
                       {recent.format.toUpperCase()}
@@ -341,15 +337,7 @@ export default function Library({
                       onClick={() => onOpen(book)}
                       aria-label={`Open ${bookTitle(book)}`}
                     >
-                      <span
-                        className={cn(
-                          'grid h-[52px] w-11 shrink-0 place-items-center rounded-[4px_9px_4px_4px] border bg-card text-[9px] font-semibold tracking-[.6px] text-[#7d7c6c]',
-                          'max-[520px]:row-span-2 max-[520px]:h-[47px] max-[520px]:w-[37px] max-[520px]:text-[8px]',
-                          book.format === 'epub' && 'border-[#dbe4d5] bg-[#eff3eb] text-[#52735c]',
-                        )}
-                      >
-                        {book.format.toUpperCase()}
-                      </span>
+                      <BookCover book={book} />
                       <span className="min-w-0 flex-1">
                         <span className="block text-[13px] leading-[1.6] font-medium [overflow-wrap:anywhere] max-[520px]:text-xs">
                           {bookTitle(book)}
