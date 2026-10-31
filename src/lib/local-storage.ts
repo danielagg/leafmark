@@ -5,21 +5,35 @@ import { validateFile } from './file-validation';
 interface LibraryDatabase extends DBSchema {
   books: { key: string; value: Book };
 }
-const database = () => openDB<LibraryDatabase>('leafmark-library', 1, {
-  upgrade(db) { db.createObjectStore('books', { keyPath: 'id' }); },
-});
+const database = () =>
+  openDB<LibraryDatabase>('leafmark-library', 1, {
+    upgrade(db) {
+      db.createObjectStore('books', { keyPath: 'id' });
+    },
+  });
 
 export async function listBooks(): Promise<Book[]> {
   return (await database()).getAll('books');
 }
 
-export async function addBook(file: File, sample = false, onProgress?: (percent: number) => void): Promise<Book> {
+export async function addBook(
+  file: File,
+  sample = false,
+  onProgress?: (percent: number) => void,
+): Promise<Book> {
   const format = await validateFile(file);
   onProgress?.(0);
   const book: Book = {
-    id: crypto.randomUUID(), filename: file.name, format, bytes: file.size,
-    createdAt: Date.now(), lastReadAt: null, position: null, progress: 0,
-    file: new Blob([file], { type: format === 'pdf' ? 'application/pdf' : 'application/epub+zip' }), sample,
+    id: crypto.randomUUID(),
+    filename: file.name,
+    format,
+    bytes: file.size,
+    createdAt: Date.now(),
+    lastReadAt: null,
+    position: null,
+    progress: 0,
+    file: new Blob([file], { type: format === 'pdf' ? 'application/pdf' : 'application/epub+zip' }),
+    sample,
   };
   await (await database()).add('books', book);
   onProgress?.(100);
@@ -31,12 +45,19 @@ export async function openBook(id: string): Promise<ReadableBook | undefined> {
   const tx = db.transaction('books', 'readwrite');
   const book = await tx.store.get(id);
   if (book && !book.file) throw new Error('This local book has no file. Please import it again.');
-  if (book) { book.lastReadAt = Date.now(); await tx.store.put(book); }
+  if (book) {
+    book.lastReadAt = Date.now();
+    await tx.store.put(book);
+  }
   await tx.done;
   return book as ReadableBook | undefined;
 }
 
-export async function saveProgress(id: string, position: ReadingPosition, progress: number): Promise<void> {
+export async function saveProgress(
+  id: string,
+  position: ReadingPosition,
+  progress: number,
+): Promise<void> {
   const db = await database();
   const tx = db.transaction('books', 'readwrite');
   const book = await tx.store.get(id);

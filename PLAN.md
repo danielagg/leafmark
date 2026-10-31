@@ -42,16 +42,16 @@ Use a simple responsive layout, readable text, and a white reading background. K
 
 ## Recommended stack
 
-| Concern | Recommendation |
-| --- | --- |
-| UI | React + TypeScript + Vite |
-| Installation | Web app manifest, app icons, standalone display |
-| Hosting | Vercel Hobby, static frontend |
-| Shared access code and remembered device access | Supabase Auth behind a code-only unlock screen |
-| File records and saved positions | Supabase Postgres |
-| Original files | Supabase private Storage |
-| PDF rendering | Mozilla PDF.js |
-| EPUB rendering | epub.js |
+| Concern                                         | Recommendation                                          |
+| ----------------------------------------------- | ------------------------------------------------------- |
+| UI                                              | React + TypeScript + Vite + Tailwind CSS v4 + shadcn/ui |
+| Installation                                    | Web app manifest, app icons, standalone display         |
+| Hosting                                         | Vercel Hobby, static frontend                           |
+| Shared access code and remembered device access | Supabase Auth behind a code-only unlock screen          |
+| File records and saved positions                | Supabase Postgres                                       |
+| Original files                                  | Supabase private Storage                                |
+| PDF rendering                                   | Mozilla PDF.js                                          |
+| EPUB rendering                                  | epub.js                                                 |
 
 Verify installation and standalone launch in Helium on Mac and Windows, and Chrome on Android phones and tablets. Also support ordinary website use. PWA installation does not imply offline support; add a service worker only if a verified installation requirement calls for one.
 
@@ -104,8 +104,8 @@ The first release restores the latest position when a book is reopened. It does 
 
 ## Minimum data model
 
-| Table | Fields |
-| --- | --- |
+| Table   | Fields                                                                                                                                  |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `books` | `id`, `owner_id`, `filename`, `format`, `storage_path`, `byte_size`, nullable `reading_position`, nullable `last_read_at`, `created_at` |
 
 Use `pdf` or `epub` for `format`. Store the format-specific locator as validated JSON in `reading_position`. Set progress timestamps on the server. Use unique storage paths even when two files have the same filename.

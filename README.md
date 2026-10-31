@@ -74,10 +74,24 @@ Accepts ordinary `.pdf` and `.epub` files. Password-protected PDFs, restricted K
 
 PWA installation depends on the browser. Use a supported browser's install-app action to launch Leafmark from its own icon. There is no service worker or offline reading promise. Native installation still needs manual verification on the target devices.
 
+## Styling and formatting
+
+The app uses Tailwind CSS v4 through its Vite plugin. Shared colors, fonts, radii, and reader dark-mode tokens live in `src/styles.css`. Reusable shadcn/ui components live in `src/components/ui`; screen layouts use Tailwind utilities. `components.json` configures the `@/` import alias and component registry.
+
+The EPUB engine creates its own scroll containers and chapter iframes. Its small integration stylesheet is `src/readers/epub-reader.css`; the isolated chapter typography is in `src/readers/epub-content.css`.
+
+Prettier formats JSX with one attribute per line and sorts Tailwind classes:
+
+```sh
+npm run format
+npm run format:check
+```
+
 ## Checks
 
 ```sh
 npm run build
+npm run format:check
 npm run test:e2e
 npm run test:cloud
 npm run test:security

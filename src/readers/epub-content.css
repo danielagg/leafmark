@@ -1,0 +1,86 @@
+/* Chapter documents live in isolated iframes, outside the app's Tailwind scope. */
+html {
+  background: white;
+  font-size: 18px !important;
+  color-scheme: light;
+}
+
+body {
+  font-family: LeafmarkLora, Lora, Georgia, serif;
+  font-size: 18px !important;
+  line-height: 1.85;
+  color: #26362e;
+  background: white;
+  padding-top: 20px !important;
+  padding-bottom: 36px !important;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: #285b49;
+}
+
+html[data-leafmark-mode='horizontal'],
+html[data-leafmark-mode='horizontal'] body {
+  background: #f5f3ef !important;
+  color: #292724 !important;
+}
+
+html[data-leafmark-mode='horizontal'] body {
+  line-height: 1.55 !important;
+  padding-block: 24px !important;
+}
+
+html[data-leafmark-mode='horizontal'] p {
+  line-height: 1.55 !important;
+  margin-block: 0 0.85em !important;
+  letter-spacing: normal !important;
+  word-spacing: normal !important;
+  orphans: 2;
+  widows: 2;
+}
+
+html[data-leafmark-mode='horizontal']
+  p:not([align]):not([style*='text-align']):not(.Centre):not(.Center):not(.center):not(
+    .RightAlign
+  ) {
+  text-align: start !important;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+html[data-leafmark-mode='horizontal'] :is(li, blockquote) {
+  line-height: 1.55 !important;
+}
+
+html[data-leafmark-mode='horizontal'] :is(h1, h2, h3) {
+  line-height: 1.2 !important;
+  text-wrap: balance;
+}
+
+html[data-leafmark-mode='horizontal'] :is(pre, code, kbd, samp, math, svg) {
+  hyphens: none;
+}
+
+html[data-leafmark-theme='dark'],
+html[data-leafmark-theme='dark'] body {
+  color-scheme: dark;
+  color: #dce5dc !important;
+  background: #18211c !important;
+}
+
+html[data-leafmark-theme='dark'] body * {
+  color: inherit !important;
+  background-color: transparent !important;
+  border-color: #46564a !important;
+}
+
+html[data-leafmark-theme='dark'] :is(a, a *) {
+  color: #a9cbb8 !important;
+}
