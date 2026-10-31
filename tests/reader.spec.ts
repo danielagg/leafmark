@@ -543,12 +543,88 @@ for (const mobile of [false, true]) {
   });
 }
 
-for (const mobile of [false, true]) {
-  test(`${mobile ? 'mobile' : 'desktop'} EPUB switches scroll directions, lays out book spreads, and restores horizontal reading`, async ({
+test('EPUB forces vertical reading on phones and restores the device preference when widened', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await samples(page);
+  await page.evaluate(() => localStorage.setItem('leafmark-epub-reading-mode', 'horizontal'));
+  const open = page.getByRole('button', { name: 'Open A little room to read.epub' });
+  await open.click();
+  const reader = page.getByRole('region', { name: 'EPUB reader' });
+  const viewport = reader.locator('.epub-viewport');
+  const direction = page.getByRole('group', { name: 'Scroll direction' });
+  const horizontal = page.getByRole('button', { name: 'Horizontal scrolling', exact: true });
+  const vertical = page.getByRole('button', { name: 'Vertical scrolling', exact: true });
+  const preference = () => page.evaluate(() => localStorage.getItem('leafmark-epub-reading-mode'));
+  const ready = () => expect(viewport).toHaveAttribute('aria-busy', 'false', { timeout: 20000 });
+  await ready();
+  await expect(reader).toHaveAttribute('data-reading-mode', 'vertical');
+  await expect(direction).toHaveCount(0);
+  expect(await preference()).toBe('horizontal');
+  expect(
+    await reader.locator('.epub-container').evaluate((element) => ({
+      vertical: ['auto', 'scroll'].includes(getComputedStyle(element).overflowY),
+      scrollable: element.scrollHeight > element.clientHeight,
+    })),
+  ).toEqual({ vertical: true, scrollable: true });
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(horizontal).toHaveAttribute('aria-pressed', 'true');
+  await ready();
+  await expect(reader.locator('.epub-sheet')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Next page', exact: true }).click();
+  await ready();
+  const chapter = await reader.locator('.epub-footer').textContent();
+  await page.setViewportSize({ width: 600, height: 844 });
+  await expect(reader).toHaveAttribute('data-reading-mode', 'vertical');
+  await expect(direction).toHaveCount(0);
+  await ready();
+  await expect(reader.locator('.epub-footer')).toHaveText(chapter!);
+  expect(await preference()).toBe('horizontal');
+
+  // Reopening on a phone must not use the saved horizontal preference directly.
+  await page.getByRole('button', { name: 'Back to library' }).click();
+  await open.click();
+  await ready();
+  await expect(reader).toHaveAttribute('data-reading-mode', 'vertical');
+  await expect(direction).toHaveCount(0);
+  await expect(reader.locator('.epub-footer')).toHaveText(chapter!);
+  await page.setViewportSize({ width: 601, height: 844 });
+  await expect(horizontal).toHaveAttribute('aria-pressed', 'true');
+  await ready();
+
+  // Cross the breakpoint during another reflow, then settle on the latest size.
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(reader).toHaveAttribute('data-reading-mode', 'vertical');
+  await ready();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(horizontal).toHaveAttribute('aria-pressed', 'true');
+  await ready();
+  await vertical.click();
+  await expect(vertical).toHaveAttribute('aria-pressed', 'true');
+  await ready();
+  expect(await preference()).toBe('vertical');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(direction).toHaveCount(0);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(vertical).toHaveAttribute('aria-pressed', 'true');
+  await ready();
+  expect(await preference()).toBe('vertical');
+  expect(errors).toEqual([]);
+});
+
+for (const tablet of [false, true]) {
+  test(`${tablet ? 'tablet' : 'desktop'} EPUB switches scroll directions, lays out book spreads, and restores horizontal reading`, async ({
     page,
   }) => {
     await page.setViewportSize(
-      mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 },
+      tablet ? { width: 800, height: 844 } : { width: 1440, height: 1000 },
     );
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
@@ -570,7 +646,7 @@ for (const mobile of [false, true]) {
       'background-color',
       'rgb(0, 0, 0)',
     );
-    await expect(reader.locator('.epub-sheet')).toHaveCount(mobile ? 1 : 2);
+    await expect(reader.locator('.epub-sheet')).toHaveCount(tablet ? 1 : 2);
     expect((await reader.locator('.epub-page').boundingBox())!.width).toBeGreaterThanOrEqual(
       page.viewportSize()!.width * 0.95,
     );
@@ -648,7 +724,7 @@ for (const mobile of [false, true]) {
     await expect(horizontal).toHaveAttribute('aria-pressed', 'true');
     await expect(horizontal).toBeEnabled({ timeout: 20000 });
     await expect.poll(async () => (await visibleWords()).text).toBe(afterWheel);
-    if (mobile) {
+    if (tablet) {
       const touch = await page.context().newCDPSession(page);
       const area = (await viewport.boundingBox())!;
       const y = area.y + area.height / 2;
@@ -681,7 +757,7 @@ for (const mobile of [false, true]) {
         .toBeGreaterThan(1920 * 0.44);
     }
     await page.screenshot({
-      path: `test-results/epub-horizontal-${mobile ? 'mobile' : 'desktop'}.png`,
+      path: `test-results/epub-horizontal-${tablet ? 'tablet' : 'desktop'}.png`,
     });
 
     await vertical.click();

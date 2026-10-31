@@ -34,6 +34,7 @@ function bounded<T>(promise: PromiseLike<T>, milliseconds = 15000): Promise<T> {
 const frame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 type ReadingMode = 'vertical' | 'horizontal';
 const modePreference = 'leafmark-epub-reading-mode';
+const mobileViewport = '(max-width: 600px)';
 const themePreference = 'leafmark-epub-theme';
 
 function applyTheme(doc: Document, theme: EpubTheme) {
@@ -56,7 +57,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
   const progressCallback = useRef(onProgress);
   progressCallback.current = onProgress;
   const savedPosition = useRef(book.position);
-  const [mode, setMode] = useState<ReadingMode>(() => {
+  const [preferredMode, setPreferredMode] = useState<ReadingMode>(() => {
     try {
       if (localStorage.getItem(modePreference) === 'horizontal') return 'horizontal';
     } catch {
@@ -64,7 +65,11 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
     }
     return 'vertical';
   });
-  const modeRef = useRef(mode);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia(mobileViewport).matches);
+  const desiredMode = isMobile ? 'vertical' : preferredMode;
+  const desiredModeRef = useRef<ReadingMode>(desiredMode);
+  desiredModeRef.current = desiredMode;
+  const [mode, setMode] = useState<ReadingMode>(desiredMode);
   const [theme, setTheme] = useState<EpubTheme>(() => {
     try {
       const saved = localStorage.getItem(themePreference);
@@ -89,10 +94,32 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
   const controls = useRef<{
     page: (page: number) => void;
     zoom: (zoom: number) => void;
-    mode: (mode: ReadingMode) => void;
+    syncMode: () => void;
   } | null>(null);
   const [sectionLabel, setSectionLabel] = useState('');
   const [percentage, setPercentage] = useState(Math.round(book.progress * 100));
+
+  useEffect(() => {
+    const media = window.matchMedia(mobileViewport);
+    const update = () => setIsMobile(media.matches);
+    media.addEventListener('change', update);
+    update();
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    controls.current?.syncMode();
+  }, [desiredMode]);
+
+  function chooseMode(next: ReadingMode) {
+    if (isMobile) return;
+    setPreferredMode(next);
+    try {
+      localStorage.setItem(modePreference, next);
+    } catch {
+      /* Optional device preference. */
+    }
+  }
 
   useEffect(() => {
     try {
@@ -123,7 +150,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
     let stopGenerating: (() => void) | undefined;
     let locationsReady = false;
     let currentZoom = 1;
-    let currentMode = modeRef.current;
+    let currentMode = desiredModeRef.current;
     let verticalAnchor: { cfi: string; offset: number } | undefined;
     let horizontalMoved = false;
     let wheelTotal = 0;
@@ -134,6 +161,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
     let saveTimer: ReturnType<typeof setTimeout> | undefined;
     let resizeObserver: ResizeObserver | undefined;
     let resizeFrame = 0;
+    let modeFrame = 0;
     let spineCount = 1;
     let toc: NavItem[] = [];
     const documents = new Map<
@@ -591,9 +619,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
       zoom: (next) => {
         void changeZoom(next);
       },
-      mode: (next) => {
-        void changeMode(next);
-      },
+      syncMode,
     };
 
     function attachContents(contents: Contents) {
@@ -693,6 +719,21 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
       return rendition;
     }
 
+    // Reconcile the latest viewport/preference after any in-flight turn or reflow.
+    // A breakpoint crossed while the reader is busy must not be dropped.
+    function syncMode() {
+      cancelAnimationFrame(modeFrame);
+      modeFrame = requestAnimationFrame(() => {
+        if (cancelled || !restored || !rendition || !scroller) return;
+        if (currentMode === desiredModeRef.current) return;
+        if (navigating) {
+          syncMode();
+          return;
+        }
+        void changeMode(desiredModeRef.current).finally(syncMode);
+      });
+    }
+
     async function changeMode(next: ReadingMode) {
       if (
         !publication ||
@@ -720,13 +761,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
       restored = false;
       setTransitioning(true);
       currentMode = next;
-      modeRef.current = next;
       setMode(next);
-      try {
-        localStorage.setItem(modePreference, next);
-      } catch {
-        /* Optional preference. */
-      }
       try {
         await frame();
         if (cancelled) return;
@@ -750,8 +785,9 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
         scroller.addEventListener('scroll', onScroll, { passive: true });
         restored = true;
         navigating = false;
-        dirty = true;
-        persist();
+        dirty = false;
+        const actual = currentLocation(current);
+        if (actual) updateLocation(actual);
         syncFrames();
       } catch {
         fail();
@@ -897,6 +933,8 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
         }
         if (!displayed || cancelled) return;
         restored = true;
+        setMode(currentMode);
+        syncMode();
         syncFrames();
         setLoading(false);
         let width = host.clientWidth,
@@ -912,6 +950,10 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
               (width === host.clientWidth && height === host.clientHeight)
             )
               return;
+            if (currentMode !== desiredModeRef.current) {
+              syncMode();
+              return;
+            }
             persist();
             const location = currentLocation(rendition);
             const cfi = location?.start.cfi ? horizontalAnchor(location.start.cfi) : undefined;
@@ -968,6 +1010,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
       document.removeEventListener('visibilitychange', onHidden);
       resizeObserver?.disconnect();
       cancelAnimationFrame(resizeFrame);
+      cancelAnimationFrame(modeFrame);
       disposeRendition();
       const oldBook = publication;
       if (oldBook) {
@@ -1013,8 +1056,8 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
         disabled={loading || !!error || transitioning}
         minZoom={0.6}
         maxZoom={2}
-        readingMode={mode}
-        onReadingModeChange={(next) => controls.current?.mode(next)}
+        readingMode={isMobile ? undefined : mode}
+        onReadingModeChange={chooseMode}
         theme={theme}
         onThemeChange={setTheme}
         onPageChange={(next) => controls.current?.page(next)}
@@ -1029,7 +1072,7 @@ export default function EpubReader({ book, onProgress, registerBeforeClose }: Re
         <div
           ref={viewport}
           className={cn('epub-viewport absolute overflow-hidden [&_iframe]:border-0', pageInsets)}
-          aria-busy={loading}
+          aria-busy={loading || transitioning}
           inert={!!error || loading}
         />
         {mode === 'horizontal' && (
