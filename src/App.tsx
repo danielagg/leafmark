@@ -192,11 +192,10 @@ export default function App() {
     {activeBook ? <main className="reader-shell">
       <header className="reader-header">
         <button className="reader-back icon-button" aria-label="Back to library" title="Back to library" onClick={() => { beforeReaderClose.current?.(); setActiveBook(null); }}><ArrowLeft size={20} /></button>
-        <Leaf className="reader-brand-icon" size={21} aria-hidden="true" />
         <div className="reader-heading" title={activeBook.filename}>{activeBook.filename}</div>
         <span className={`reader-status ${saveState === 'error' ? 'save-error' : ''}`} role="status">
-          {saveState === 'saving' ? <LoaderCircle size={14} className="spin" /> : saveState === 'saved' ? <Check size={14} /> : null}
-          {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? isCloudMode ? 'Saved to your library' : 'Saved on this device' : 'Not saved'}
+          {saveState === 'saving' ? <LoaderCircle size={14} className="spin" /> : null}
+          {saveState === 'saving' ? 'Saving…' : ''}
         </span>
       </header>
       <Suspense fallback={<div className="reader-loading" role="status"><LoaderCircle className="spin" size={24} /> Opening your book…</div>}>

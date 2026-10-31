@@ -70,12 +70,13 @@ test('private cloud library remembers sessions, resumes across devices, uploads 
     let failProgress = true;
     await desktop.route('**/rest/v1/books?*', route => route.request().method() === 'PATCH' && failProgress ? route.abort('failed') : route.continue());
     await desktop.getByRole('button', { name: 'Next page', exact: true }).click();
-    await expect(desktop.locator('.reader-status')).toHaveText('Not saved');
+    await expect(desktop.getByRole('alert')).toContainText('Your position could not be saved.');
+    await expect(desktop.locator('.reader-status')).toBeEmpty();
     expect((await client.from('books').select('reading_position').eq('filename', pdfName).single()).data?.reading_position?.page).toBe(3);
     failProgress = false;
     await desktop.evaluate(() => window.dispatchEvent(new Event('online')));
     await expect.poll(async () => (await client.from('books').select('reading_position').eq('filename', pdfName).single()).data?.reading_position?.page).toBe(4);
-    await expect(desktop.locator('.reader-status')).toHaveText('Saved to your library');
+    await expect(desktop.locator('.reader-status')).toBeEmpty();
     await expect(desktop.getByRole('alert')).toHaveCount(0);
     // An idle reader must not overwrite a newer save from another device.
     const updated = await client.from('books').update({ reading_position: { type: 'pdf', page: 2, offset: 0 }, progress: 0.25 }).eq('filename', pdfName);

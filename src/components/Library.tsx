@@ -54,12 +54,12 @@ export default function Library({ books, onOpen, onUpload, onDelete, onSamples, 
         onChange={event => { const files = Array.from(event.target.files ?? []); if (files.length) onUpload(files); event.target.value = ''; }} />
       <header className="library-header">
         <a className="wordmark" href="./" aria-label="Leafmark home"><span className="brand-icon"><Leaf size={23} strokeWidth={1.7} aria-hidden="true" /></span>Leafmark</a>
-        <div className="library-header-actions"><span className="local-indicator"><span aria-hidden="true" />{cloud ? 'Private library' : 'Local library'}</span>{onLock && <button className="icon-button" onClick={onLock} aria-label="Lock library" title="Lock library on this device"><LockKeyhole size={16} strokeWidth={1.6} aria-hidden="true" /></button>}</div>
+        <div className="library-header-actions">{onLock && <button className="icon-button" onClick={onLock} aria-label="Lock library" title="Lock library on this device"><LockKeyhole size={16} strokeWidth={1.6} aria-hidden="true" /></button>}</div>
       </header>
 
       <main className="library-main" id="main-content">
         <div className="library-intro">
-          <div><p className="eyebrow">A little space to read</p><h1>Your library<span className="heading-period">.</span></h1><p className="intro-copy">Good books. A quiet place. Pick up where you left off.</p></div>
+          <div><h1>Your library<span className="heading-period">.</span></h1></div>
           {addButton('intro-add')}
         </div>
 
@@ -85,7 +85,7 @@ export default function Library({ books, onOpen, onUpload, onDelete, onSamples, 
               </div>
             </section>}
             <section className="book-section" aria-labelledby="books-title" aria-busy={busy}>
-              <div className="list-heading"><h2 className="section-label" id="books-title">All books <span className="book-count">{books.length}</span></h2><span className="sort-note">Filename, A–Z</span></div>
+              <div className="list-heading"><h2 className="section-label" id="books-title">All books <span className="book-count">{books.length}</span></h2></div>
               <ul className="book-list">{sorted.map(book => <li className="book-row" key={book.id}>
                 <button className="book-open" onClick={() => onOpen(book)} aria-label={`Open ${book.filename}`}>
                   <span className={`format-badge format-${book.format}`}>{book.format.toUpperCase()}</span>
@@ -95,13 +95,12 @@ export default function Library({ books, onOpen, onUpload, onDelete, onSamples, 
                 </button>
                 <button className="icon-button book-delete" onClick={() => onDelete(book)} disabled={busy} aria-label={`Delete ${book.filename}`} title={`Delete ${book.filename}`}><Trash2 size={17} strokeWidth={1.6} aria-hidden="true" /></button>
               </li>)}</ul>
-              <div className="list-footnote"><span>Drop PDF or EPUB files anywhere to add them.</span><button className="text-button" onClick={onSamples} disabled={unavailable}>Try sample books <ArrowRight size={14} aria-hidden="true" /></button></div>
             </section>
           </>
         )}
         <div className="busy-announcement visually-hidden" role="status" aria-live="polite">{busy ? 'Adding books to your library. Please wait.' : ''}</div>
       </main>
-      <footer className="library-footer"><span><span className="footer-dot" aria-hidden="true" />{cloud ? 'Saved to your library' : 'Saved on this device'}</span><span>A page at a time.</span></footer>
+     
       {dragging && <div className="drop-overlay" aria-hidden="true"><div><Upload size={32} strokeWidth={1.4} /><h2>A new chapter.</h2><p>Drop your PDF or EPUB books to add them.</p></div></div>}
     </div>
   );
